@@ -152,7 +152,8 @@ ul#topnav li> ul > li{
     display:table;
     width:auto;
     margin-bottom:15px;
-    padding:15px 0;
+    /* padding:15px 0; */
+    padding: auto
     text-align:center;
     color:#171E2E;
 }
