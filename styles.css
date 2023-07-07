@@ -31,6 +31,17 @@ h2 {
     text-align: center;
 }
 
+.logo-list {
+    display: flex;
+    width: 20%; 
+    float:left;
+}
+
+.menu-items {
+    display: flex;
+    width: 20%; 
+    float:right;
+}
 
 #menu {
     width:100%;
@@ -232,10 +243,13 @@ ul#topnav li {display: block; margin: 0; background-color: #000; padding: 1% 0; 
 ul#topnav li a { display: block; padding-right:0%; padding-bottom:5px; text-decoration:none;}
 ul#topnav li a:hover {text-decoration:underline;}
 
-ul#topnav li> ul { display:inline-block; float:right;  margin:0 auto; }
-ul#topnav li> ul > li {padding-left:10px; }
+/*ul#topnav li> ul { display: block; float:left;  margin:0 auto; }
+ul#topnav li> ul > li {padding-left:10px; }*/
 
 ul.logo-list {display: none;} /* Hide logo items */
+ul.menu-items {float: clear;}  /* Clear properties */
+ul.menu-items {width:100%; display: block;  } /* Set new properties */
+/*ul.menu-items {display: flex; float: clear; justify-content: center; display: block; justify-content: center;} */
 
 /* other items */
 .pageitem h2 {font-size:120%;}
