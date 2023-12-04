@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<title>Team</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="stylesheet" href="styles.css">
+
+<!-- <head>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+</style>
+</head> -->
+
+
+</head>
+
+<body id="team">
+
+
+
+<!-- HEADER -->
+
+<div id="menu">
+<nav>
+
+<input type="checkbox" id="show-menu" role="button">
+
+<label for="show-menu" class="open"><span class="fa fa-bars"></span></label>
+<label for="show-menu" class="close"><span class="fa fa-times"></span></label>
+
+<ul id="topnav" >
+	<ul class="logo-list"> <!-- style="width: 20%; float:left;">  -->
+		<li><img src="images/ERC-Logo-Black.png" alt="Logo" class="logo" height="40"></li>
+		<li><img src="images/BBK-Logo-Black.png" alt="Logo" class="logo" height="40"></li>
+		<li><img src="images/UCL-Logo-Black.png" alt="Logo" class="logo" height="40"></li>
+	</ul>
+
+	<ul class="menu-items"> <!-- style="width: 20%; float:right;"> -->
+		<li><a href="index.html">Home</a></li>
+		<li><a href="team.html">Team</a></li>
+		<li><a href="research.html">Research</a></li>
+		<li><a href="dataset.html">Dataset</a></li>
+	</ul>
+</ul>
+</nav>
+</div> 
+
+<!-- TITLE -->
+
+<div id="container">
+<div id="pageheader">
+<h1>Team</h1>
+</div> 
+
+
+<!-- COLUMNS -->
+<div class="row">
+  <div class="column" onclick="openTab('b1');" style="background:#009140;">
+    Box 1
+  </div>
+  <div class="column" onclick="openTab('b2');" style="background:#009140;">
+    Box 2
+  </div>
+  <div class="column" onclick="openTab('b3');" style="background:#009140;">
+    Box 3
+  </div>
+  <div class="column" onclick="openTab('b4');" style="background:#009140;">
+    Box 4
+  </div>
+</div>
+
+<!-- Full-width columns: (hidden by default) -->
+<div id="b1" class="containerTab" style="display:none;background:#009140">
+  <span onclick="this.parentElement.style.display='none'" class="closebtn">&times;</span>
+  <h2>Box 1</h2>
+  <p>Lorem ipsum dolor sit amet, te quo doctus abhorreant, et pri deleniti intellegat, te sanctus inermis ullamcorper nam. Ius error diceret deseruisse ad</p>
+</div>
+
+<div id="b2" class="containerTab" style="display:none;background:#009140">
+  <span onclick="this.parentElement.style.display='none'" class="closebtn">&times;</span>
+  <h2>Box 2</h2>
+  <p>Lorem ipsum dolor sit amet, te quo doctus abhorreant, et pri deleniti intellegat, te sanctus inermis ullamcorper nam. Ius error diceret deseruisse ad</p>
+</div>
+
+<div id="b3" class="containerTab" style="display:none;background:#009140">
+  <span onclick="this.parentElement.style.display='none'" class="closebtn">&times;</span>
+  <h2>Box 3</h2>
+  <p>Lorem ipsum dolor sit amet, te quo doctus abhorreant, et pri deleniti intellegat, te sanctus inermis ullamcorper nam. Ius error diceret deseruisse ad</p>
+</div>
+
+<div id="b4" class="containerTab" style="display:none;background:#009140">
+  <span onclick="this.parentElement.style.display='none'" class="closebtn">&times;</span>
+  <h2>Box 4</h2>
+  <p>Lorem ipsum dolor sit amet, te quo doctus abhorreant, et pri deleniti intellegat, te sanctus inermis ullamcorper nam. Ius error diceret deseruisse ad</p>
+</div>
+
+<script>
+function openTab(tabName) {
+  var i, x;
+  x = document.getElementsByClassName("containerTab");
+  for (i = 0; i < x.length; i++) {
+    x[i].style.display = "none";
+  }
+  document.getElementById(tabName).style.display = "block";
+}
+</script>
+
+
+<!-- TITLE -->
+
+<div id="container">
+<div id="pageheader">
+<h1>Contributors</h1>
+<h3>Gavyn Anderson, Aliza Choi, Madelynn Osborne, Dereon Ritter, Lindsey Mayer, Dennis Maddox, Araceli Benson, Baylee Owen, Aiden Parks, Jazmin Kline, Keely Crawford, James Hawkins, Gavyn Anderson, Aliza Choi, Madelynn OsborneGavyn Anderson, Aliza Choi, Madelynn Osborne
+</h3>
+</div> 
+
+<!-- <div id="container"> -->
+
+
+<!-- <div class="section">
+<div class="pageitem">
+<div id="slider">
+<figure>
+	<img src="images/15.png" alt>
+	<img src="images/16.png" alt>
+	<img src="images/13.png" alt>
+	<img src="images/15.png" alt>
+</figure>
+</div>
+</div>
+</div> -->
+
+<!--
+<div class="section">
+<div class="pageitem">
+<div class="col">
+<h2>Aenean at Ipsum</h2>
+<p>Phasellus ac leo eget felis egestas vestibulum nec at velit. Vivamus venenatis, <a href="#">nibh ut tempus viverra</a>, tellus augue pulvinar sapien, at iaculis justo nisi non metus. Quisque quis malesuada arcu, sed ultricies nibh. Duis vehicula metus quis arcu rutrum faucibus eget ut ex. Curabitur lacus justo, iaculis congue suscipit quis, posuere at turpis. Class aptent taciti sociosqu ad litora torquent per conubia nostra, per inceptos himenaeos. Donec in quam non urna volutpat consequat. Proin mollis ut mauris et venenatis. Vivamus dui nibh, blandit vitae pellentesque sed, finibus sit amet nulla.</p>
+</div>
+<div class="col">
+<h2>Etiam Eleifend Imperdiet Elit</h2>
+<p>Nunc rhoncus convallis ex, eget viverra ex pulvinar non. Suspendisse enim ligula, varius sed rutrum id, bibendum vitae lectus. Mauris mollis pellentesque diam et congue. Praesent dignissim semper facilisis. Duis gravida, elit nec iaculis efficitur, sem orci commodo lectus, id cursus sem diam in eros. Maecenas porta mi sed diam condimentum gravida. Nam a ligula consectetur, imperdiet lacus nec, rutrum dui. Sed aliquam at magna non mollis. Duis fermentum purus eget nisi dictum, vitae bibendum nulla cursus.</p>
+</div>
+</div>
+</div>
+
+<div class="section">
+<div class="pageitem">
+<h2>Nec Pretium Condimentum</h2>
+<p>Morbi bibendum faucibus placerat. Morbi vulputate, erat nunc tincidunt leo, scelerisque ullamcorper dui dolor porttitor neque. Donec ut faucibus erat, vel efficitur enim. Fusce sit amet ligula eu libero lacinia condimentum sed in turpis.</p><p>Vestibulum ante ipsum primis in faucibus orci luctus et ultrices posuere cubilia Curae; Vivamus pulvinar metus vel neque sagittis, at pharetra tellus tincidunt. Sed semper euismod ipsum, feugiat consequat nisi eleifend et. Duis volutpat gravida efficitur. Nulla iaculis blandit semper. Maecenas eget aliquet libero. Donec sit amet sagittis erat. Sed elementum felis id interdum cursus. Phasellus ac urna feugiat, placerat massa et, vestibulum odio. Aenean eu nisl lobortis, tincidunt ligula rhoncus, convallis mi.</p>
+</div>
+</div>
+
+<div class="section">
+<div class="pageitem">
+<div class="col">
+<h2>Phasellus Ac Leo Eget</h2>
+<p> Vivamus venenatis, nibh ut tempus viverra, tellus augue pulvinar sapien, at iaculis justo nisi non metus. Quisque quis malesuada arcu, sed ultricies nibh. Duis vehicula metus quis arcu rutrum faucibus eget ut ex. Curabitur lacus justo, iaculis congue suscipit quis, posuere at turpis. </p><p>Class aptent taciti sociosqu ad litora torquent per conubia nostra, per inceptos himenaeos. Donec in quam non urna volutpat consequat. Proin mollis ut mauris et venenatis. Vivamus dui nibh, blandit vitae pellentesque sed, finibus sit amet nulla.</p>
+</div>
+<div class="col">
+<h2>Etiam Imperdiet Elit</h2>
+<p>Nunc rhoncus convallis ex, eget viverra ex pulvinar non. Suspendisse enim ligula, varius sed rutrum id, bibendum vitae lectus. Mauris mollis pellentesque diam et congue. Praesent dignissim semper facilisis. Duis gravida, elit nec iaculis efficitur, sem orci commodo lectus, id cursus sem diam in eros. </p><p>Maecenas porta mi sed diam condimentum gravida. Nam a ligula consectetur, imperdiet lacus nec, rutrum dui. Sed aliquam at magna non mollis. Duis fermentum purus eget nisi dictum, vitae bibendum nulla cursus.</p>
+</div>
+<div class="col">
+<h2>Morbi Bibendum</h2>
+<p>Donec ut faucibus erat, vel efficitur enim. Fusce sit amet ligula eu libero lacinia condimentum sed in turpis. Vestibulum ante ipsum primis in faucibus orci luctus et ultrices posuere cubilia Curae; Vivamus pulvinar metus vel neque sagittis, at pharetra tellus tincidunt. Sed semper euismod ipsum, feugiat consequat nisi eleifend et. Duis volutpat gravida efficitur. Nulla iaculis blandit semper. Maecenas eget aliquet libero. Donec sit amet sagittis erat. Sed elementum felis id interdum cursus. Phasellus ac urna feugiat, placerat massa et, vestibulum odio. Aenean eu nisl lobortis, tincidunt ligula rhoncus, convallis mi.</p>
+</div>
+</div>
+</div>
+
+-->
+
+
+<!-- FOOTER 
+<div class="section">
+<div id="footer">
+<nav>
+<input type="checkbox" id="show-menu" role="button">
+<ul id="bottomnav">  
+
+<li><a href="research.html"><img src="images/1.png" alt="button1" style="width:100%;height:100%;"></a></li>
+<li><a href="research.html"><img src="images/2.png" alt="button1" style="width:100%;height:100%;"></a></li>
+<li><a href="research.html"><img src="images/3.png" alt="button1" style="width:100%;height:100%;"></a></li>
+<li><a href="research.html"><img src="images/4.png" alt="button1" style="width:100%;height:100%;"></a></li>
+<li><a href="research.html"><img src="images/5.png" alt="button1" style="width:100%;height:100%;"></a></li>
+<li><a href="research.html"><img src="images/6.png" alt="button1" style="width:100%;height:100%;"></a></li>
+
+
+</nav>
+
+</div>-->
+
+</div>
+
+
+<!-- DISCLAIMERS 
+<div class="section">
+
+<div id="credits">
+    <div class="col"><p>Last modified 2023/05/23</p></div>
+    <div class="col"><p>Designed by @mkachlicka</p></div>
+
+</div>
+</div>
+
+</div> -->
+</body>
+</html>
