@@ -1,12 +1,65 @@
 ﻿@import url(http://fonts.googleapis.com/css?family=Abel);
 @import url(https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.6.3/css/font-awesome.css);
 
-body { background-color:#171E2E; color: #ffffff; font-family: 'Abel', sans-serif; font-size: 93%; font-weight:normal;margin: 0; }
+
+body#index{ background-color:#171E2E; color: #ffffff; font-family: 'Abel', sans-serif; font-size: 93%; font-weight:normal;margin: 0; }
+body#team{ background-color:#BDD7CD; color: #ffffff; font-family: 'Abel', sans-serif; font-size: 93%; font-weight:normal;margin: 0;}
+body#research{ background-color:#BDD7CD; color: #ffffff; font-family: 'Abel', sans-serif; font-size: 93%; font-weight:normal;margin: 0;}
+
+
 a:link, a:visited, a:active{ color:inherit; text-decoration: none; }
 a:hover {color: #000; text-decoration:underline; }
 
 .right {text-align:right; }
 .hide {display: none;}
+
+
+.column {
+  float: left;
+  width: 25%;
+  padding: 50px;
+  text-align: center;
+  font-size: 25px;
+  cursor: pointer;
+  color: white;
+  border-left: 30px solid #BDD7CD;
+  border-right: 30px solid #BDD7CD;
+}
+
+.row {
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  max-width: 85%;
+  margin: 0 auto;
+}
+
+.containerTab {
+  padding: 20px;
+  color: white;
+  /*border-left: 60px solid #BDD7CD;
+  border-right: 60px solid #BDD7CD; */
+  max-width: calc(85% - 60px);
+  margin: 0 auto;
+  box-sizing: border-box;
+}
+
+/* Clear floats after the columns */
+.row:after {
+  content: "";
+  display: table;
+  clear: both;
+}
+
+/* Closable button inside the container tab */
+.closebtn {
+  float: right;
+  color: white;
+  font-size: 35px;
+  cursor: pointer;
+}
+
+
 
 nav {
     display: table;
@@ -15,21 +68,62 @@ nav {
     margin: 0 auto;
 }
 
-
-
-h1 {
+#index h1 {
     font-size:450%;
     font-weight:bold;
     color:#ffffff;
     text-align: center;
 }
 
-h2 {
+#index h2 {
     font-size:200%;
     font-weight:bold;
     color:#ffffff;
     text-align: center;
 }
+
+#team h1 {
+    font-size:450%;
+    font-weight:bold;
+    color:#171E2E;
+    text-align: left;
+}
+
+#team h2 {
+    font-size:200%;
+    font-weight:bold;
+    color: #ffffff;
+    text-align: left;
+}
+
+#team h3 {
+    font-size:200%;
+    font-weight:bold;
+    color: #171E2E;
+    text-align: center;
+}
+
+#research h1 {
+    font-size:450%;
+    font-weight:bold;
+    color:#171E2E;
+    text-align: left;
+}
+
+#research h2 {
+    font-size:200%;
+    font-weight:bold;
+    color: #171E2E;
+    text-align: left;
+}
+
+#research h3 {
+    font-size:100%;
+    font-weight:bold;
+    color: #171E2E;
+    text-align: left;
+}
+
 
 .logo-list {
     display: flex;
