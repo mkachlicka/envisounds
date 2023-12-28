@@ -94,7 +94,7 @@ nav {
     font-size:450%;
     font-weight:bold;
     color:#171E2E;
-    text-align: left;
+    text-align: center;
 }
 
 #team h2 {
@@ -106,7 +106,7 @@ nav {
 
 #team h3 {
     font-size:200%;
-    /*font-weight:bold;*/
+    font-weight:bold;
     color: #171E2E;
     text-align: center;
 }
@@ -115,7 +115,7 @@ nav {
     font-size:450%;
     font-weight:bold;
     color:#171E2E;
-    text-align: left;
+    text-align: center;
 }
 
 #research h2 {
@@ -127,7 +127,7 @@ nav {
 
 #research h3 {
     font-size:110%;
-    /*font-weight:bold;*/
+    font-weight:bold;
     color: #171E2E;
     text-align: left;
 }
@@ -137,7 +137,7 @@ nav {
     font-size:450%;
     font-weight:bold;
     color:#171E2E;
-    text-align: left;
+    text-align: center;
 }
 
 #dataset h2 {
