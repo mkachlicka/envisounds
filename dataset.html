@@ -10,6 +10,28 @@
 
 <body id="research">
 
+<style>
+#more {display: none;}
+</style>
+
+<script>
+function myFunction() {
+  var dots = document.getElementById("dots");
+  var moreText = document.getElementById("more");
+  var btnText = document.getElementById("myBtn");
+
+  if (dots.style.display === "none") {
+    dots.style.display = "inline";
+    btnText.innerHTML = "Read more"; 
+    moreText.style.display = "none";
+  } else {
+    dots.style.display = "none";
+    btnText.innerHTML = "Read less"; 
+    moreText.style.display = "inline";
+  }
+}
+</script>
+
 
 <!-- HEADER -->
 
@@ -68,14 +90,21 @@
 	<em>The Journal of the Acoustical Society of America</em>, 146, 2873. </p>
 </h3>
 </div>
+
+<a id="anchor-name">The  name where you want to jump</a>
+
+
 -->
 <div class="pageitem">
-	<h2>Introduction</h2>
+	<h2 id="intro">Introduction</h2>
 <h3>
-<p>Sound categories included in the database were selected based on the sounds' overall ecological frequency of occurrence (Ballas, 1993), and membership in distinct subclasses of sounds (Schaefer, 1977) at different levels of abstraction to represent common and ‘easy to distinguish’ sound classes (Gemmeke et al., 2017). The top-level classes comprise: (1) human, (2) manmade or mechanical, and (3) sounds of nature or natural sounds, indicated in the number of reviewed taxonomies as the most general division between sound classes. These main groups can be further divided into multiple subcategories at a higher level of categorical abstraction, derived from consulting specialised lists of sounds (e.g., ornithology, entomology, and bioacoustics) and lists of sound categories and their annotations generously provided by FreeSound.org and BBC Archive. Each subcategory was composed of more basic-level classes (e.g., cars, cats, drills) chosen to reflect the most frequently occurring in environment and familiar agents and objects. For example, when selecting animals, cats and dogs were selected over donkeys or lions as these are more likely to appear in our everyday environment and expose listeners to natural acoustic variability within that class. Where possible, each basic class also consists of multiple types of sounds produced by the same source and uniquely associated with it.</p>
+<p>Sound categories included in the database were selected based on the sounds' overall ecological frequency of occurrence (Ballas, 1993), and membership in distinct subclasses of sounds (Schaefer, 1977) at different levels of abstraction to represent common and ‘easy to distinguish’ sound classes (Gemmeke et al., 2017). The top-level classes comprise: (1) human, (2) manmade or mechanical, and (3) sounds of nature or natural sounds, indicated in the number of reviewed taxonomies as the most general division between sound classes. These main groups can be further divided into multiple subcategories at a higher level of categorical abstraction, derived from consulting specialised lists of sounds (e.g., ornithology, entomology, and bioacoustics) and lists of sound categories and their annotations generously provided by FreeSound.org and BBC Archive. Each subcategory was composed of more basic-level classes (e.g., cars, cats, drills) chosen to reflect the most frequently occurring in environment and familiar agents and objects. For example, when selecting animals, cats and dogs were selected over donkeys or lions as these are more likely to appear in our everyday environment and expose listeners to natural acoustic variability within that class. Where possible, each basic class also consists of multiple types of sounds produced by the same source and uniquely associated with it.</p> <span id="dots"></span><span id="more">
 <p>Category selection process included the following 4 steps. (1) <u>Identification </u> included a thorough review of environmental sound taxonomies to identify a list of possible categories and their organisational criteria. (2) <u>Synthsesis</u> focused on extracting common structural characteristics to select categories that were most consistently indicated across various taxonomies. (3) <u>Specialization</u> ivolved exploring representative subcategories and consulting specialistic sound taxonomies and lists of classes from otehr databases to identify sounds produced by the same source. For example, although cats or dogs were included in most previous studies, both animals have more than one vocalization type in their repertoire. To correctly identify species- or source-specific sounds, appropriate literature was consulted (e.g., sounds produced by animals – cats, Pandeya & Lee, 2018; dogs, Molnar et al., 2008; birds, Briggs et al., 2012; sounds produced by cars, Morel et al., 2012; Park et al., 2019). (4) <u>Filtering</u> refers to the process of selecting the most frequently occuring and the most characteristic sounds for each class. First, lists of ecological frequency of everyday sounds (Ballas, 1993) and familiarity ratings (e.g., Marcell et al., 2000; Hocking et al., 2013; Burns & Rajan, 2019) were consulted. For example, familiarity ratings (with lower ranks representing more familiar sounds) indicated the sounds produced by a dog (M=1.3), cat (M=1.22), horse (M=1.27) and cow (M=1.54) are more familiar than other animals such as donkey (M=2.6), bear (M=3.31), goat (M=2.04) or lion (M=2.42; a full list of familiarity ratings can be found in Hocking et al., 2013). Then, for each of those selected objects or agents, we selected the most characteristic sounds. For example, sounds of dogs included sounds of barking or howling, but not sounds of snoring or walking, which are not distinctive for a dog (i.e., other animals might be snoring or walking).</p>
-
 <p>The labels were constructed to be consistent grammatically and as generically descriptive as possible. They are all linguistic phrases derived from the most common labels occurring in the reviewed databases. Given that neither nouns nor verbs are sufficient to distinguish between certain sound classes (e.g., a 'dog' label does not differentiate between barking and growling; at the same time growling might not be indicative of a dog; Saygin, Dick, & Bates, 2005), we opted to include both, noun and verb (or its derivative) constructions in our labels. Their grammatical complexity was kept uniform by transforming all phrases into ‘noun + gerund’ forms. A similar approach was successfully exercised in previous research (e.g., Saygin, Dick, Wilson, Dronkers, & Bates, 2003). The same syntactic frame was used to construct the labels for all the sounds.</p>
+</span>
+
+<button onclick="myFunction()" id="myBtn">Read more</button>
+
 </h3>
 </div>
 
@@ -85,27 +114,21 @@
 <h3>
 <p>Stimuli 530 are natural sounds downloaded and manually edited from the following databases: <a href="https://freesound.org/">Free Sound</a>, <a href="http://bbcsfx.acropolis.org.uk/">BBC Sound Effects</a>, <a href="http://soundbible.com/">Sound Bible</a>, <a href="https://www.zapsplat.com/">Zapsplat</a>, <a href="http://www.orangefreesounds.com/">Orange Free Sounds</a>, Adobe Audition Sound Effects Library and <a href="https://www.youtube.com/">YouTube</a>.</p>
 </h3>
+
+<a href="data/dataset_placeholder.txt" download=""><button type="submit"><i class="fa fa-download"></i> Dataset Download</button></a>
+
 </div>
 
 <div class="pageitem">
 	<h2>Acoustics</h2>
 <h3>
 <p>Selection of the acoustic features was inspired by previous research in audio content analysis (Lerch, 2012), with emphasis on the applications in environmental sound recognition and classification (e.g., Keller & Berger, 2001; Peltonen et al., 2002; Cai et al., 2006; Muhammad & Alghatabar, 2009; Leaver & Rauschecker, 2010; Velero & Alias, 2010; for review see: Alias, Socoro, & Sevillano, 2016; Serizel, Bisot, Essid, & Richard, 2017). We included features which were shown to perform well in describing and parameterising environmental sounds. The list of selected features is not exhaustive, but based on the usefulness of those features in previous research it should provide a good starting point for considering variability in the acoustic structure of environmental sounds.</p>
-
-<iframe
-  src="https://envisoundsvisualisations-audiofile-visualisation.streamlit.app//?embed=true"
-  height="450"
-  width="450">
-  </iframe>
-
-
-<iframe
-  src="https://envisoundsvisualisations-within-category.streamlit.app/?embed=true"
-  height="450"
-  width="450">
-  </iframe>
-
 </h3>
+
+<p>
+<a href="data/placeholder.txt" download=""><button type="submit"><i class="fa fa-download"></i> Acoustic Features Download</button></a>
+</p>
+
 </div>
 
 <div class="pageitem">
@@ -117,10 +140,15 @@
 
 
 <div class="pageitem">
-	<h2>Norms</h2>
+	<h2><a id="norms">Norms</a></h2>
 <h3>
 <p>TBC.</p>
 </h3>
+
+<p>
+<a href="data/placeholder.txt" download=""><button type="submit"><i class="fa fa-download"></i> Norms Download</button></a>
+</p>
+
 </div>
 
 
@@ -129,6 +157,19 @@
 <h3>
 <p>TBC.</p>
 </h3>
+
+<iframe
+  src="https://envisoundsvisualisations-audiofile-visualisation.streamlit.app//?embed=true"
+  height="450"
+  width="450">
+  </iframe>
+
+<iframe
+  src="https://envisoundsvisualisations-within-category.streamlit.app/?embed=true"
+  height="450"
+  width="450">
+  </iframe>
+
 </div>
 
 <!--<div class="pageitem">
