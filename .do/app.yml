@@ -1,0 +1,31 @@
+alerts:
+- rule: DEPLOYMENT_FAILED
+- rule: DOMAIN_FAILED
+domains:
+  - domain: envisounds.${TLD}
+    type: PRIMARY
+    zone: envisounds.${TLD}
+  - domain: www.envisounds.${TLD}
+    type: ALIAS
+    zone: envisounds.${TLD}
+features:
+- buildpack-stack=ubuntu-22
+ingress:
+  rules:
+  - component:
+      name: website
+    match:
+      path:
+        prefix: /
+name: envisounds-${TLD}
+region: lon
+services:
+- http_port: 80
+  image:
+    registry_type: GHCR
+    registry: JasperVanDenBosch
+    repository: envisounds-org
+    digest: ${IMAGE_DIGEST}
+  instance_count: 1
+  instance_size_slug: basic-xxs
+  name: website
