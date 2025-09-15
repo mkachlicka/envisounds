@@ -23,7 +23,7 @@ services:
 - http_port: 80
   image:
     registry_type: GHCR
-    registry: JasperVanDenBosch
+    registry: jaspervandenbosch
     repository: envisounds-org
     digest: ${IMAGE_DIGEST}
   instance_count: 1
