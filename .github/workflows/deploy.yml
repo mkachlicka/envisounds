@@ -1,0 +1,51 @@
+name: Deploy
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+permissions:
+  contents: read
+  packages: write
+
+env:
+  TLD: 'org'
+  environment: 'production'
+
+jobs:
+
+    build:
+        runs-on: ubuntu-latest
+
+        steps:
+            - uses: actions/checkout@v4
+            - name: Inspect files
+              run: ls -l dist/
+            - name: Log in to the Container registry
+              uses: docker/login-action@v3.3.0
+              with:
+                registry: ghcr.io
+                username: ${{ github.actor }}
+                password: ${{ secrets.GITHUB_TOKEN }}
+            - name: Build and push Docker image
+              id: push
+              uses: docker/build-push-action@v6.10.0
+              with:
+                file: Dockerfile
+                context: .
+                no-cache: true
+                push: true
+                tags: ghcr.io/jaspervandenbosch/envisounds-org:latest
+            - name: Deploy the app
+              uses: digitalocean/app_action/deploy@v2
+              env:
+                IMAGE_DIGEST: ${{ steps.push.outputs.digest }}
+                GHCR_CREDS: ${{ secrets.GHCR_CREDS }}
+                TLD: ${{ env.TLD }}
+              with:
+                token: ${{ secrets.DIGITALOCEAN_ACCESS_TOKEN }}
+                app_spec_location: .do/app.yml
+                print_build_logs: true
+                print_deploy_logs: true
