@@ -37,8 +37,7 @@ jobs:
                 context: .
                 no-cache: true
                 push: true
-                #tags: ghcr.io/jaspervandenbosch/envisounds-org:latest
-                tags: ghcr.io/mkachlicka/envisounds-org:latest
+                tags: ghcr.io/jaspervandenbosch/envisounds-org:latest
             - name: Deploy the app
               uses: digitalocean/app_action/deploy@v2
               env:
