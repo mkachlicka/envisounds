@@ -1,0 +1,606 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<title>Audio Features</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="stylesheet" href="styles.css">
+<script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+<script src="https://d3js.org/d3.v7.min.js"></script>
+<style>
+    select {
+        padding: 10px;
+        font-size: 16px;
+        margin: 20px 0;
+        border: 2px solid #ddd;
+        border-radius: 5px;
+    }
+    .plot-container {
+        background: white;
+        padding: 20px;
+        margin: 20px 0;
+        border-radius: 8px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    #loading {
+        text-align: center;
+        padding: 40px;
+        font-size: 18px;
+    }
+    .controls {
+        background: white;
+        padding: 20px;
+        margin: 20px 0;
+        border-radius: 8px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    .control-row {
+        margin: 15px 0;
+    }
+    label {
+        display: inline-block;
+        width: 150px;
+        font-weight: bold;
+    }
+    select, input[type="file"] {
+        padding: 8px;
+        font-size: 14px;
+        border: 2px solid #ddd;
+        border-radius: 5px;
+        min-width: 250px;
+    }
+    button {
+        padding: 10px 20px;
+        font-size: 14px;
+        background-color: #28a745;
+        color: white;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+        margin-left: 10px;
+    }
+    button:hover { background-color: #218838; }
+    button:disabled { background-color: #ccc; cursor: not-allowed; }
+    /*.plot-button {
+        margin-top: 15px;
+        padding: 12px 30px;
+        font-size: 16px;
+        background-color: #28a745;
+        margin-left: 0;
+    }*/
+    /*.plot-button:hover { background-color: #218838; }*/
+    .audio-player {
+        margin: 20px 0;
+        padding: 15px;
+        background: #e9ecef;
+        border-radius: 5px;
+    }
+    audio { width: 100%; }
+    .plot-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 20px;
+        margin: 20px 0;
+    }
+    .info-box {
+        background: #d1ecf1;
+        border: 1px solid #bee5eb;
+        border-radius: 5px;
+        padding: 15px;
+        margin: 15px 0;
+    }
+    .feature-description {
+        font-size: 14px;
+        color: #666;
+        font-style: italic;
+        margin-top: 5px;
+    }
+    .checkbox-group {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 10px;
+        margin: 15px 0;
+    }
+    .checkbox-item { display: flex; align-items: center; }
+    .checkbox-item input { margin-right: 8px; }
+</style>
+</head>
+
+<body id="research">
+
+<!-- HEADER -->
+<div id="menu">
+<nav>
+<input type="checkbox" id="show-menu" role="button">
+<label for="show-menu" class="open"><span class="fa fa-bars"></span></label>
+<label for="show-menu" class="close"><span class="fa fa-times"></span></label>
+<ul id="topnav">
+    <ul class="logo-list">
+        <li><img src="images/ERC-Logo-Black.png" alt="Logo" class="logo" height="40"></li>
+        <li><img src="images/BBK-Logo-Black.png" alt="Logo" class="logo" height="40"></li>
+        <li><img src="images/UCL-Logo-Black.png" alt="Logo" class="logo" height="40"></li>
+    </ul>
+    <ul class="menu-items">
+        <li><a href="index.html">Home</a></li>
+        <li><a href="about.html">About</a></li>
+        <li><a href="dataset.html">Dataset</a></li>
+        <li><a href="research.html">Research</a></li>
+    </ul>
+</ul>
+</nav>
+</div>
+
+<!-- TITLE -->
+<div id="container">
+<div id="pageheader">
+    <h1>Audio features visualisations</h1>
+</div>
+
+<div class="section">
+<div class="pageitem">
+<h2></h2>
+<h3>
+
+    <div class="controls">
+        <h3>Select a sound to explore:</h3>
+
+        <div class="control-row">
+            <label for="categorySelect">Category:</label>
+            <select id="categorySelect" onchange="loadSoundsFromCategory()">
+                <option value="">-- Loading categories --</option>
+            </select>
+        </div>
+
+        <div class="control-row">
+            <label for="soundSelect">Sound File:</label>
+            <select id="soundSelect" disabled>
+                <option value="">-- Select a category first --</option>
+            </select>
+            <button onclick="loadSelectedSound()" id="loadButton" disabled>Load Sound</button>
+        </div>
+
+        <div id="loadingMsg" style="display:none; color:#666; margin-top:10px;">Loading...</div>
+    </div>
+
+    <div id="audioContent" style="display:none;">
+        <div class="info-box" id="soundInfo"></div>
+
+        <div class="audio-player">
+            <h3>Audio Player</h3>
+            <audio id="audioPlayer" controls></audio>
+        </div>
+
+        <h2>Waveform &amp; Spectrogram</h2>
+        <div class="plot-grid">
+            <div id="waveformPlot"    class="plot-container"></div>
+            <div id="spectrogramPlot" class="plot-container"></div>
+        </div>
+
+        <h2>Acoustic Features</h2>
+        <div class="controls">
+            <h3>Select features to display:</h3>
+            <div class="checkbox-group">
+                <div class="checkbox-item">
+                    <input type="checkbox" id="feat_envelope" checked>
+                    <label for="feat_envelope" style="width:auto;">Amplitude Envelope</label>
+                </div>
+                <div class="checkbox-item">
+                    <input type="checkbox" id="feat_rms">
+                    <label for="feat_rms" style="width:auto;">RMS Energy</label>
+                </div>
+                <!--<div class="checkbox-item">
+                    <input type="checkbox" id="feat_loudness">
+                    <label for="feat_loudness" style="width:auto;">Perceptual Loudness (A-weighted)</label>
+                </div>-->
+                <div class="checkbox-item">
+                    <input type="checkbox" id="feat_zcr">
+                    <label for="feat_zcr" style="width:auto;">Zero Crossing Rate</label>
+                </div>
+                <div class="checkbox-item">
+                    <input type="checkbox" id="feat_spectrum">
+                    <label for="feat_spectrum" style="width:auto;">Frequency Spectrum</label>
+                </div>
+                <div class="checkbox-item">
+                    <input type="checkbox" id="feat_centroid">
+                    <label for="feat_centroid" style="width:auto;">Spectral Centroid</label>
+                </div>
+                <div class="checkbox-item">
+                    <input type="checkbox" id="feat_rolloff">
+                    <label for="feat_rolloff" style="width:auto;">Spectral Rolloff</label>
+                </div>
+                <div class="checkbox-item">
+                    <input type="checkbox" id="feat_bandwidth">
+                    <label for="feat_bandwidth" style="width:auto;">Spectral Bandwidth</label>
+                </div>
+                <div class="checkbox-item">
+                    <input type="checkbox" id="feat_flatness">
+                    <label for="feat_flatness" style="width:auto;">Spectral Flatness</label>
+                </div>
+                <div class="checkbox-item">
+                    <input type="checkbox" id="feat_flux">
+                    <label for="feat_flux" style="width:auto;">Spectral Flux</label>
+                </div>
+                <div class="checkbox-item">
+                    <input type="checkbox" id="feat_kurtosis">
+                    <label for="feat_kurtosis" style="width:auto;">Spectral Kurtosis</label>
+                </div>
+                <div class="checkbox-item">
+                    <input type="checkbox" id="feat_hnr">
+                    <label for="feat_hnr" style="width:auto;">Harmonic-to-Noise Ratio</label>
+                </div>
+                <div class="checkbox-item">
+                    <input type="checkbox" id="feat_mel_spectrogram">
+                    <label for="feat_mel_spectrogram" style="width:auto;">Mel Spectrogram</label>
+                </div>
+                <div class="checkbox-item">
+                    <input type="checkbox" id="feat_contrast">
+                    <label for="feat_contrast" style="width:auto;">Spectral Contrast</label>
+                </div>
+                <div class="checkbox-item">
+                    <input type="checkbox" id="feat_mel_bands">
+                    <label for="feat_mel_bands" style="width:auto;">Log-Mel Band Energies</label>
+                </div>
+                <div class="checkbox-item">
+                    <input type="checkbox" id="feat_mfcc">
+                    <label for="feat_mfcc" style="width:auto;">MFCCs</label>
+                </div>
+                <div class="checkbox-item">
+                    <input type="checkbox" id="feat_mfcc_delta">
+                    <label for="feat_mfcc_delta" style="width:auto;">MFCC Deltas</label>
+                </div>
+            </div>
+            <button class="plot-button" onclick="updateFeatures()">Plot Selected Features</button>
+        </div>
+
+        <div id="featuresContainer"></div>
+    </div>
+
+    <script>
+        const GITHUB_USER   = 'mkachlicka';
+        const GITHUB_REPO   = 'envisounds_dataset';
+        const GITHUB_BRANCH = 'main';
+        const DSET_FOLDER   = 'audio_files';
+        const FEAT_FOLDER   = 'data/features';
+        const BASE_URL      = `https://raw.githubusercontent.com/${GITHUB_USER}/${GITHUB_REPO}/${GITHUB_BRANCH}/data/`;
+        const FEAT_BASE     = `${BASE_URL}features`;
+
+        let features = null;   // currently loaded feature JSON
+        let currentCategory = '';
+        let currentSound = '';
+
+        // ── Category / sound dropdowns ────────────────────────────────────────
+
+        async function loadCategories() {
+            try {
+                // Browse the features repo, not the audio dataset
+                const url = `https://api.github.com/repos/${GITHUB_USER}/${GITHUB_REPO}/contents/${FEAT_FOLDER}?ref=${GITHUB_BRANCH}`;
+                const contents = await fetch(url).then(r => r.json());
+
+                const categories = contents
+                    .filter(item => item.type === 'dir')
+                    .map(item => item.name)
+                    .sort();
+
+                const select = document.getElementById('categorySelect');
+                select.innerHTML = '<option value="">-- Select a category --</option>';
+                categories.forEach(cat => {
+                    const opt = document.createElement('option');
+                    opt.value = opt.textContent = cat;
+                    select.appendChild(opt);
+                });
+            } catch (err) {
+                document.getElementById('categorySelect').innerHTML =
+                    '<option value="">Error loading categories</option>';
+                console.error(err);
+            }
+        }
+
+        async function loadSoundsFromCategory() {
+            const category = document.getElementById('categorySelect').value;
+            const soundSelect = document.getElementById('soundSelect');
+            const loadButton  = document.getElementById('loadButton');
+
+            if (!category) {
+                soundSelect.innerHTML = '<option value="">-- Select a category first --</option>';
+                soundSelect.disabled = true;
+                loadButton.disabled  = true;
+                return;
+            }
+
+            try {
+                // List .json feature files from the features repo
+                const url = `https://api.github.com/repos/${GITHUB_USER}/${GITHUB_REPO}/contents/${FEAT_FOLDER}/${category}?ref=${GITHUB_BRANCH}`;
+                const contents = await fetch(url).then(r => r.json());
+
+                const sounds = contents
+                    .filter(item => item.name.endsWith('.json'))
+                    .map(item => item.name)
+                    .sort();
+
+                soundSelect.innerHTML = '<option value="">-- Select a sound --</option>';
+                sounds.forEach(s => {
+                    const opt = document.createElement('option');
+                    opt.value = s;                          // e.g. sound01.json
+                    opt.textContent = s.replace('.json', '');
+                    soundSelect.appendChild(opt);
+                });
+
+                soundSelect.disabled = false;
+                loadButton.disabled  = false;
+            } catch (err) {
+                soundSelect.innerHTML = '<option value="">Error loading sounds</option>';
+                console.error(err);
+            }
+        }
+
+        // ── Load pre-computed feature JSON ────────────────────────────────────
+
+        async function loadSelectedSound() {
+            const category = document.getElementById('categorySelect').value;
+            const sound    = document.getElementById('soundSelect').value;  // e.g. sound01.json
+
+            if (!category || !sound) {
+                alert('Please select both category and sound file');
+                return;
+            }
+
+            currentCategory = category;
+            currentSound    = sound;
+
+            const msg = document.getElementById('loadingMsg');
+            msg.style.display = 'block';
+            msg.textContent   = 'Loading features...';
+
+            try {
+                const featUrl = `${FEAT_BASE}/${category}/${sound}`;
+
+                const resp = await fetch(featUrl);
+                if (!resp.ok) throw new Error(
+                    `Feature file not found: ${featUrl}\n` +
+                    `Run export_audio_features.ipynb and push data/features/ to GitHub.`
+                );
+
+                features = await resp.json();
+
+                // Audio player — try matching WAV from dataset repo (may not exist for all files)
+                const wavName  = sound.replace('.json', '.wav');
+                const audioUrl = `https://raw.githubusercontent.com/${GITHUB_USER}/${GITHUB_REPO}/${GITHUB_BRANCH}/${DSET_FOLDER}/${category}/${wavName}`;
+                document.getElementById('audioPlayer').src = audioUrl;
+
+                const displayName = sound.replace('.json', '');
+                document.getElementById('soundInfo').innerHTML =
+                    `<strong>📁 Category:</strong> ${category} &nbsp;|&nbsp; ` +
+                    `<strong>🔊 Sound:</strong> ${displayName} &nbsp;|&nbsp; ` +
+                    `<strong>⏱ Duration:</strong> ${features.info.duration.toFixed(2)} s &nbsp;|&nbsp; ` +
+                    `<strong>Hz:</strong> ${features.info.sample_rate}`;
+
+                document.getElementById('audioContent').style.display = 'block';
+                msg.style.display = 'none';
+
+                plotWaveformAndSpectrogram();
+                updateFeatures();
+
+            } catch (err) {
+                msg.textContent = `Error: ${err.message}`;
+                console.error(err);
+            }
+        }
+
+        // ── Waveform + Spectrogram (always shown) ─────────────────────────────
+
+        function plotWaveformAndSpectrogram() {
+            // Waveform
+            Plotly.newPlot('waveformPlot', [{
+                x:    features.waveform.times,
+                y:    features.waveform.samples,
+                type: 'scatter',
+                mode: 'lines',
+                line: { color: 'steelblue', width: 1 },
+                showlegend: false,
+            }], {
+                title:  'Waveform',
+                xaxis:  { title: 'Time (s)' },
+                yaxis:  { title: 'Amplitude', range: [-1, 1] },
+                margin: { l: 50, r: 20, t: 40, b: 40 },
+            });
+
+            // Spectrogram
+            const spec = features.spectrogram;
+            const allVals  = spec.matrix.flat();
+            const globalMax = allVals.reduce((a, b) => Math.max(a, b), -Infinity);
+
+            Plotly.newPlot('spectrogramPlot', [{
+                z:          spec.matrix,
+                x:          spec.times,
+                y:          spec.frequencies,
+                type:       'heatmap',
+                zmin:       globalMax - 100,
+                zmax:       globalMax,
+                colorscale: [
+                    [0.0,  'rgb(0,0,0)'],
+                    [0.15, 'rgb(20,10,60)'],
+                    [0.3,  'rgb(60,15,110)'],
+                    [0.45, 'rgb(120,20,100)'],
+                    [0.6,  'rgb(200,60,20)'],
+                    [0.75, 'rgb(240,140,20)'],
+                    [0.9,  'rgb(255,220,80)'],
+                    [1.0,  'rgb(255,255,255)'],
+                ],
+                colorbar: { title: 'dB' },
+            }], {
+                title:  'Spectrogram',
+                xaxis:  { title: 'Time (s)' },
+                yaxis:  { title: 'Frequency (Hz)' },
+                margin: { l: 50, r: 50, t: 40, b: 40 },
+            });
+        }
+
+        // ── Selected acoustic features ────────────────────────────────────────
+
+        function updateFeatures() {
+            if (!features) return;
+
+            const container = document.getElementById('featuresContainer');
+            container.innerHTML = '';
+            const grid = document.createElement('div');
+            grid.className = 'plot-grid';
+            container.appendChild(grid);
+
+            // line plots: {key, title, desc, color, yTitle, xKey}
+            // heatmap plots: {key, title, desc, type:'heatmap', yTitle, matrixKey}
+
+            const featureDefs = [
+                // ── Time-domain ──────────────────────────────────────────────
+                { key: 'envelope', title: 'Amplitude Envelope',
+                    desc: 'Mean absolute amplitude per frame — loudness contour',
+                    color: 'red', yTitle: 'Amplitude', xKey: 'times' },
+                { key: 'rms',
+                    title: 'RMS Energy',
+                    desc: 'Root-mean-square energy per frame — overall loudness',
+                    color: 'orange', yTitle: 'RMS', xKey: 'times' },
+                { key: 'loudness', title: 'Perceptual Loudness (A-weighted)',
+                    desc: 'A-weighted RMS — loudness weighted to human hearing sensitivity',
+                    color: 'goldenrod', yTitle: 'A-weighted RMS', xKey: 'times' },
+                { key: 'zcr', title: 'Zero Crossing Rate', 
+                    desc: 'Sign changes per frame — high for noisy textures, low for tonal',
+                    color: 'green', yTitle: 'ZCR', xKey: 'times' },
+
+                // ── Spectral ─────────────────────────────────────────────────
+                { key: 'spectrum', title: 'Frequency Spectrum',
+                    desc: 'Mean power spectrum across the whole sound',
+                    color: 'black', yTitle: 'Magnitude (dB)', xKey: 'frequencies' },
+                { key: 'centroid', title: 'Spectral Centroid',
+                    desc: 'Centre of mass of the spectrum — perceptual brightness',
+                    color: 'blue', yTitle: 'Frequency (Hz)', xKey: 'times' },
+                { key: 'rolloff', title: 'Spectral Rolloff', 
+                    desc: 'Frequency below which 85% of energy is contained',
+                        color: 'purple', yTitle: 'Frequency (Hz)', xKey: 'times' },
+                { key: 'bandwidth', title: 'Spectral Bandwidth',
+                    desc: 'Spread of energy around the spectral centroid',
+                    color: 'brown', yTitle: 'Bandwidth (Hz)', xKey: 'times' },
+                { key: 'flatness', title: 'Spectral Flatness',
+                    desc: 'Geometric/arithmetic mean ratio — 1=noise, 0=tonal', 
+                    color: 'teal',  yTitle: 'Flatness', xKey: 'times' },
+                { key: 'flux', title: 'Spectral Flux',
+                    desc: 'Frame-to-frame spectral change — high for dynamic, low for steady',
+                    color: 'steelblue', yTitle: 'Flux', xKey: 'times' },
+                { key: 'kurtosis', title: 'Spectral Kurtosis',
+                    desc: 'Peakiness of the spectrum — high for impulsive sounds',
+                    color: 'crimson', yTitle: 'Kurtosis', xKey: 'times' },
+                { key: 'hnr', title: 'Harmonic-to-Noise Ratio',
+                    desc: 'Harmonic energy vs noise floor (dB) — high for tonal sources',      color: 'darkgreen',  yTitle: 'HNR (dB)',       xKey: 'times' },
+
+                // ── Heatmaps ─────────────────────────────────────────────────
+                { key: 'mel_spectrogram', title: 'Mel Spectrogram',
+                    desc: 'Spectrogram on a perceptual mel frequency scale',
+                    type: 'heatmap', matrixKey: 'matrix', xKey: 'times', yKey: 'frequencies', yTitle: 'Mel Frequency (Hz)', 
+                    colorbarTitle: 'dB', colorscale: [[0,'rgb(0,0,0)'],[0.15,'rgb(20,10,60)'],[0.3,'rgb(60,15,110)'],[0.45,'rgb(120,20,100)'],[0.6,'rgb(200,60,20)'],[0.75,'rgb(240,140,20)'],[0.9,'rgb(255,220,80)'],[1,'rgb(255,255,255)']] },
+                { key: 'contrast',  title: 'Spectral Contrast',
+                    desc: 'Peak vs valley energy difference across 7 sub-bands',
+                    type: 'heatmap', matrixKey: 'bands',  xKey: 'times', yTitle: 'Sub-band', 
+                    colorbarTitle: 'dB', colorscale: 'RdBu' },
+                { key: 'mel_bands', title: 'Log-Mel Band Energies',
+                    desc: 'Energy in 8 broad perceptual mel bands',
+                    type: 'heatmap', matrixKey: 'bands',  xKey: 'times', yTitle: 'Mel band',
+                    colorbarTitle: 'dB', colorscale: 'Viridis' },
+                { key: 'mfcc', title: 'MFCCs',
+                    desc: '13 mel-frequency cepstral coefficients across time',
+                    type: 'heatmap', matrixKey: 'coefficients', xKey: 'times', yTitle: 'Coefficient', 
+                    colorbarTitle: '', colorscale: 'RdBu' },
+                { key: 'mfcc_delta', title: 'MFCC Deltas',
+                    desc: 'First-order temporal derivatives of MFCCs',
+                    type: 'heatmap', matrixKey: 'coefficients', xKey: 'times', yTitle: 'Coefficient',
+                    colorbarTitle: '', colorscale: 'RdBu' },
+            ];
+
+            let anyShown = false;
+
+            featureDefs.forEach(def => {
+                const checkId = `feat_${def.key}`;
+                if (!document.getElementById(checkId)?.checked) return;
+                if (!features[def.key]) return;
+
+                anyShown = true;
+                const plotDiv = document.createElement('div');
+                plotDiv.className = 'plot-container';
+                plotDiv.innerHTML = `
+                    <h3>${def.title}</h3>
+                    <p class="feature-description">${def.desc}</p>
+                    <div id="plot_${def.key}"></div>
+                `;
+                grid.appendChild(plotDiv);
+
+                const feat = features[def.key];
+
+                if (def.type === 'heatmap') {
+                    // matrix is stored as [n_bands/coeffs][n_frames] — Plotly heatmap needs [row][col]
+                    const matrix = feat[def.matrixKey];
+                    const xVals  = feat[def.xKey];
+                    const nRows  = matrix.length;
+                    const yVals  = def.yKey ? feat[def.yKey] : Array.from({length: nRows}, (_, i) => i);
+                    const allZ   = matrix.flat();
+                    const zmax   = allZ.reduce((a, b) => Math.max(a, b), -Infinity);
+                    const zmin   = allZ.reduce((a, b) => Math.min(a, b),  Infinity);
+
+                    Plotly.newPlot(`plot_${def.key}`, [{
+                        z:          matrix,
+                        x:          xVals,
+                        y:          yVals,
+                        type:       'heatmap',
+                        zmin:       zmin,
+                        zmax:       zmax,
+                        colorscale: def.colorscale,
+                        colorbar:   { title: def.colorbarTitle },
+                    }], {
+                        xaxis:  { title: 'Time (s)' },
+                        yaxis:  { title: def.yTitle },
+                        margin: { l: 55, r: 60, t: 20, b: 40 },
+                    });
+
+                } else {
+                    const xVals = def.xKey === 'frequencies' ? feat.frequencies : feat.times;
+                    const yVals = def.xKey === 'frequencies' ? feat.magnitudes  : feat.values;
+
+                    Plotly.newPlot(`plot_${def.key}`, [{
+                        x:    xVals,
+                        y:    yVals,
+                        type: 'scatter',
+                        mode: 'lines',
+                        line: { color: def.color, width: 1.5 },
+                        showlegend: false,
+                    }], {
+                        xaxis:  { title: def.xKey === 'frequencies' ? 'Frequency (Hz)' : 'Time (s)' },
+                        yaxis:  { title: def.yTitle },
+                        margin: { l: 55, r: 20, t: 20, b: 40 },
+                    });
+                }
+            });
+
+            if (!anyShown) {
+                container.innerHTML =
+                    '<div class="info-box">No features selected. Check at least one above and click "Plot Selected Features".</div>';
+            }
+        }
+
+        // ── Init ──────────────────────────────────────────────────────────────
+        loadCategories();
+    </script>
+
+</h3>
+</div>
+</div>
+</div>
+
+
+<!-- DISCLAIMERS -->
+<div class="section">
+<div id="credits">
+    <div class="col"><p>Last modified 2026/04/03</p></div>
+    <div class="col"><p>Designed by MKachlicka</p></div>
+    <div class="col"><p>&#169; 2018-2026 MKachlicka. All rights reserved.</p></div>
+</div>
+</div>
+
+</body>
+</html>
