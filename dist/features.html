@@ -453,43 +453,44 @@
             const featureDefs = [
                 // ── Time-domain ──────────────────────────────────────────────
                 { key: 'envelope', title: 'Amplitude Envelope',
-                    desc: 'Mean absolute amplitude per frame — loudness contour',
+                    desc: 'Mean absolute amplitude',
                     color: 'red', yTitle: 'Amplitude', xKey: 'times' },
                 { key: 'rms',
                     title: 'RMS Energy',
-                    desc: 'Root-mean-square energy per frame — overall loudness',
+                    desc: 'Root-mean-square energy',
                     color: 'orange', yTitle: 'RMS', xKey: 'times' },
                 { key: 'loudness', title: 'Perceptual Loudness (A-weighted)',
-                    desc: 'A-weighted RMS — loudness weighted to human hearing sensitivity',
+                    desc: 'A-weighted RMS weighted tloudness',
                     color: 'goldenrod', yTitle: 'A-weighted RMS', xKey: 'times' },
                 { key: 'zcr', title: 'Zero Crossing Rate', 
-                    desc: 'Sign changes per frame — high for noisy textures, low for tonal',
+                    desc: 'Sign changes per frame',
                     color: 'green', yTitle: 'ZCR', xKey: 'times' },
 
                 // ── Spectral ─────────────────────────────────────────────────
                 { key: 'spectrum', title: 'Frequency Spectrum',
-                    desc: 'Mean power spectrum across the whole sound',
+                    desc: 'Mean power spectrum',
                     color: 'black', yTitle: 'Magnitude (dB)', xKey: 'frequencies' },
                 { key: 'centroid', title: 'Spectral Centroid',
-                    desc: 'Centre of mass of the spectrum — perceptual brightness',
+                    desc: 'Centre of mass of the spectrum (perceptual brightness)',
                     color: 'blue', yTitle: 'Frequency (Hz)', xKey: 'times' },
                 { key: 'rolloff', title: 'Spectral Rolloff', 
                     desc: 'Frequency below which 85% of energy is contained',
-                        color: 'purple', yTitle: 'Frequency (Hz)', xKey: 'times' },
+                    color: 'purple', yTitle: 'Frequency (Hz)', xKey: 'times' },
                 { key: 'bandwidth', title: 'Spectral Bandwidth',
                     desc: 'Spread of energy around the spectral centroid',
                     color: 'brown', yTitle: 'Bandwidth (Hz)', xKey: 'times' },
                 { key: 'flatness', title: 'Spectral Flatness',
-                    desc: 'Geometric/arithmetic mean ratio — 1=noise, 0=tonal', 
+                    desc: 'Geometric/arithmetic mean ratio', 
                     color: 'teal',  yTitle: 'Flatness', xKey: 'times' },
                 { key: 'flux', title: 'Spectral Flux',
-                    desc: 'Frame-to-frame spectral change — high for dynamic, low for steady',
+                    desc: 'Frame-to-frame spectral change',
                     color: 'steelblue', yTitle: 'Flux', xKey: 'times' },
                 { key: 'kurtosis', title: 'Spectral Kurtosis',
-                    desc: 'Peakiness of the spectrum — high for impulsive sounds',
+                    desc: 'Peakiness of the spectrum',
                     color: 'crimson', yTitle: 'Kurtosis', xKey: 'times' },
                 { key: 'hnr', title: 'Harmonic-to-Noise Ratio',
-                    desc: 'Harmonic energy vs noise floor (dB) — high for tonal sources',      color: 'darkgreen',  yTitle: 'HNR (dB)',       xKey: 'times' },
+                    desc: 'Harmonic energy vs noise (dB)',
+                    color: 'darkgreen',  yTitle: 'HNR (dB)', xKey: 'times' },
 
                 // ── Heatmaps ─────────────────────────────────────────────────
                 { key: 'mel_spectrogram', title: 'Mel Spectrogram',
@@ -497,7 +498,7 @@
                     type: 'heatmap', matrixKey: 'matrix', xKey: 'times', yKey: 'frequencies', yTitle: 'Mel Frequency (Hz)', 
                     colorbarTitle: 'dB', colorscale: [[0,'rgb(0,0,0)'],[0.15,'rgb(20,10,60)'],[0.3,'rgb(60,15,110)'],[0.45,'rgb(120,20,100)'],[0.6,'rgb(200,60,20)'],[0.75,'rgb(240,140,20)'],[0.9,'rgb(255,220,80)'],[1,'rgb(255,255,255)']] },
                 { key: 'contrast',  title: 'Spectral Contrast',
-                    desc: 'Peak vs valley energy difference across 7 sub-bands',
+                    desc: 'Energy difference across sub-bands',
                     type: 'heatmap', matrixKey: 'bands',  xKey: 'times', yTitle: 'Sub-band', 
                     colorbarTitle: 'dB', colorscale: 'RdBu' },
                 { key: 'mel_bands', title: 'Log-Mel Band Energies',
@@ -596,7 +597,7 @@
 <!-- DISCLAIMERS -->
 <div class="section">
 <div id="credits">
-    <div class="col"><p>Last modified 2026/04/03</p></div>
+    <div class="col"><p>Last modified 2026/04/04</p></div>
     <div class="col"><p>Designed by MKachlicka</p></div>
     <div class="col"><p>&#169; 2018-2026 MKachlicka. All rights reserved.</p></div>
 </div>
