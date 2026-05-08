@@ -1,0 +1,527 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<title>Feature Distributions</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="stylesheet" href="styles.css">
+<script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+<style>
+    .controls {
+        background: white;
+        padding: 20px;
+        margin: 20px 0;
+        border-radius: 8px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    .controls h3 { margin-top: 0; }
+
+    #progressArea {
+        display: none;
+        margin: 15px 0;
+    }
+    #progressBar {
+        width: 100%;
+        height: 12px;
+        background: #e9ecef;
+        border-radius: 6px;
+        overflow: hidden;
+        margin: 8px 0;
+    }
+    #progressFill {
+        height: 100%;
+        width: 0%;
+        background: #007bff;
+        transition: width 0.2s;
+        border-radius: 6px;
+    }
+    #progressMsg {
+        font-size: 13px;
+        color: #666;
+    }
+
+    button {
+        padding: 10px 24px;
+        font-size: 15px;
+        background-color: #28a745;
+        color: white;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+    }
+    button:hover  { background-color: #218838; }
+    button:disabled { background-color: #aaa; cursor: not-allowed; }
+
+    .section-title {
+        font-size: 18px;
+        font-weight: bold;
+        margin: 30px 0 5px;
+        color: #333;
+        border-bottom: 2px solid #dee2e6;
+        padding-bottom: 6px;
+    }
+    .feature-desc {
+        font-size: 13px;
+        color: #666;
+        font-style: italic;
+        margin: 4px 0 10px;
+    }
+    .plot-wrap {
+        background: white;
+        padding: 16px 16px 8px;
+        margin: 0 0 24px;
+        border-radius: 8px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.08);
+    }
+    .plot-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 20px;
+    }
+    @media (max-width: 900px) {
+        .plot-grid { grid-template-columns: 1fr; }
+    }
+    #errorMsg {
+        background: #f8d7da;
+        border: 1px solid #f5c6cb;
+        border-radius: 5px;
+        padding: 12px;
+        display: none;
+        margin: 10px 0;
+        color: #721c24;
+    }
+    .info-box {
+        background: #b2beb5;
+        border: 1px solid #b2beb5;
+        border-radius: 5px;
+        padding: 12px 16px;
+        margin: 10px 0;
+        font-size: 14px;
+    }
+</style>
+</head>
+
+<body id="research">
+
+<!-- HEADER -->
+<div id="menu">
+<nav>
+<input type="checkbox" id="show-menu" role="button">
+<label for="show-menu" class="open"><span class="fa fa-bars"></span></label>
+<label for="show-menu" class="close"><span class="fa fa-times"></span></label>
+<ul id="topnav">
+    <ul class="logo-list">
+        <li><img src="images/ERC-Logo-Black.png" alt="Logo" class="logo" height="40"></li>
+        <li><img src="images/BBK-Logo-Black.png" alt="Logo" class="logo" height="40"></li>
+        <li><img src="images/UCL-Logo-Black.png" alt="Logo" class="logo" height="40"></li>
+    </ul>
+    <ul class="menu-items">
+        <li><a href="index.html">Home</a></li>
+        <li><a href="about.html">About</a></li>
+        <li><a href="dataset.html">Dataset</a></li>
+        <li><a href="research.html">Research</a></li>
+    </ul>
+</ul>
+</nav>
+</div>
+
+<!-- TITLE -->
+<div id="container">
+<div id="pageheader">
+    <h1>Feature distributions across categories</h1>
+</div>
+
+<div class="section">
+<div class="pageitem">
+
+    <div class="controls">
+        <h3>Load &amp; plot distributions</h3>
+        <p style="margin:0 0 12px; font-size:14px; color:#555;">
+            Fetches all pre-computed feature JSONs from GitHub, averages each acoustic feature
+            across the 10 exemplars per category, and plots one distribution chart per feature.
+            Plotted categories are sorted from lowest to highest average value per feature.
+        </p>
+        <button id="loadBtn" onclick="loadAndPlot()">Load All &amp; Plot</button>
+
+        <div id="progressArea">
+            <div id="progressBar"><div id="progressFill"></div></div>
+            <div id="progressMsg">Initialising…</div>
+        </div>
+        <div id="errorMsg"></div>
+    </div>
+
+    <div id="summaryBox" style="display:none;"></div>
+    <div id="plotsContainer"></div>
+
+</div>
+</div>
+</div>
+
+<!-- DISCLAIMERS -->
+<div class="section">
+<div id="credits">
+    <div class="col"><p>Last modified 2026/05/08</p></div>
+    <div class="col"><p>Designed by MKachlicka</p></div>
+    <div class="col"><p>&#169; 2018-2026 MKachlicka. All rights reserved.</p></div>
+</div>
+</div>
+
+<script>
+const GITHUB_USER   = 'mkachlicka';
+const GITHUB_REPO   = 'envisounds_dataset';
+const GITHUB_BRANCH = 'main';
+const FEAT_FOLDER   = 'data/features';
+const FEAT_BASE     = `https://raw.githubusercontent.com/${GITHUB_USER}/${GITHUB_REPO}/${GITHUB_BRANCH}/data/features`;
+
+// Cache directory listings for 24 hours to protect all users from rate limits.
+// Only the api.github.com calls count against the limit — raw file fetches do not apparently.
+const CACHE_KEY = 'envisounds_filelist_v1';
+const CACHE_TTL = 24 * 60 * 60 * 1000; // 24 hours in ms
+
+function loadCache() {
+    try {
+        const raw = sessionStorage.getItem(CACHE_KEY);
+        if (!raw) return null;
+        const { timestamp, data } = JSON.parse(raw);
+        if (Date.now() - timestamp > CACHE_TTL) { sessionStorage.removeItem(CACHE_KEY); return null; }
+        return data;
+    } catch { return null; }
+}
+
+function saveCache(data) {
+    try { sessionStorage.setItem(CACHE_KEY, JSON.stringify({ timestamp: Date.now(), data })); }
+    catch { /* sessionStorage full or unavailable — silently skip */ }
+}
+
+// ── Scalar extractor helpers ──────────────────────────────────────────────────
+
+const mean     = arr => arr.reduce((s, v) => s + v, 0) / arr.length;
+const meanFlat = matrix => mean(matrix.flat());
+
+const FEATURE_DEFS = [
+    { key: 'temporal_centroid',
+        title: 'Temporal Centroid',
+        desc: '', /*placeolders for definitions*/
+        unit: 's',
+        //color: '#4e79a7', /*if I want to color each feature differently*/
+        extract: d => d.info.temporal_centroid },
+
+    { key: 'rms',
+        title: 'RMS Energy',
+        desc: '',
+        unit: '',
+        //color: '#f28e2b',
+        extract: d => mean(d.rms.values) },
+
+    { key: 'envelope',
+        title: 'Amplitude Envelope',
+        desc: '',
+        unit: '',
+        //color: '#e15759',
+        extract: d => mean(d.envelope.values) },
+
+    { key: 'loudness',
+        title: 'Perceptual Loudness (A-weighted)',
+        desc: '',
+        unit: '',
+        //color: '#76b7b2',
+        extract: d => mean(d.loudness.values) },
+
+    { key: 'zcr',
+        title: 'Zero Crossing Rate',
+        desc: '',
+        unit: '',
+        //color: '#59a14f',
+        extract: d => mean(d.zcr.values) },
+
+    { key: 'centroid',
+        title: 'Spectral Centroid',
+        desc: '',
+        unit: 'Hz',
+        color: '#edc948',
+        extract: d => mean(d.centroid.values) },
+
+    { key: 'rolloff',
+        title: 'Spectral Rolloff',
+        desc: '',
+        unit: 'Hz',
+        //color: '#b07aa1',
+        extract: d => mean(d.rolloff.values) },
+
+    { key: 'bandwidth',
+        title: 'Spectral Bandwidth',
+        desc: '',
+        unit: 'Hz',
+        //color: '#ff9da7',
+        extract: d => mean(d.bandwidth.values) },
+
+    { key: 'flatness',
+        title: 'Spectral Flatness',
+        desc: '',
+        unit: '',
+        //color: '#9c755f',
+        extract: d => mean(d.flatness.values) },
+
+    { key: 'flux',
+        title: 'Spectral Flux',
+        desc: '', 
+        unit: '',
+        //color: '#bab0ac',
+        extract: d => mean(d.flux.values) },
+
+    { key: 'kurtosis',
+        title: 'Spectral Kurtosis',
+        desc: '',
+        unit: '',
+        //color: '#4e79a7',
+        extract: d => mean(d.kurtosis.values) },
+
+    { key: 'hnr',
+        title: 'Harmonic-to-Noise Ratio',
+        desc: '',
+        unit: 'dB',
+        //color: '#f28e2b',
+        extract: d => mean(d.hnr.values) },
+
+    { key: 'spectrum',
+        title: 'Mean Spectral Magnitude',
+        desc: '',
+        unit: 'dB',
+        //color: '#e15759',
+        extract: d => mean(d.spectrum.magnitudes) },
+
+    { key: 'mfcc',
+        title: 'MFCCs (mean across all coefficients)',
+        desc: '',
+        unit: '',
+        //color: '#76b7b2',
+        extract: d => meanFlat(d.mfcc.coefficients) },
+
+    { key: 'mfcc_delta',
+        title: 'MFCC Deltas (mean absolute)',
+        desc: '',
+        unit: '',
+        //color: '#59a14f',
+        extract: d => mean(d.mfcc_delta.coefficients.flat().map(Math.abs)) },
+
+    { key: 'contrast',
+        title: 'Spectral Contrast (mean across bands)',
+        desc: '',
+        unit: 'dB',
+        //color: '#edc948',
+        extract: d => meanFlat(d.contrast.bands) },
+
+    { key: 'mel_bands',
+        title: 'Log-Mel Band Energies (mean)',
+        desc: '',
+        unit: 'dB',
+        //color: '#b07aa1',
+        extract: d => meanFlat(d.mel_bands.bands) },
+];
+
+// ── Progress helpers ──────────────────────────────────────────────────────────
+
+function setProgress(done, total, msg) {
+    document.getElementById('progressFill').style.width = `${Math.round(done / total * 100)}%`;
+    document.getElementById('progressMsg').textContent  = msg;
+}
+
+function showError(msg) {
+    const el = document.getElementById('errorMsg');
+    el.style.display = 'block';
+    el.textContent   = msg;
+}
+
+// ── Main load + plot ──────────────────────────────────────────────────────────
+
+async function loadAndPlot() {
+    const btn = document.getElementById('loadBtn');
+    btn.disabled    = true;
+    btn.textContent = 'Loading…';
+
+    document.getElementById('errorMsg').style.display    = 'none';
+    document.getElementById('progressArea').style.display = 'block';
+    document.getElementById('plotsContainer').innerHTML   = '';
+    document.getElementById('summaryBox').style.display   = 'none';
+    setProgress(0, 1, 'Fetching category list…');
+
+    try {
+        // 1. Try cache first — avoids GitHub API calls entirely on repeat loads
+        let allFiles = loadCache();
+        let fromCache = !!allFiles;
+
+        if (!allFiles) {
+            // 2. Categories — guarded against non-array (rate limit) response
+            const catUrl  = `https://api.github.com/repos/${GITHUB_USER}/${GITHUB_REPO}/contents/${FEAT_FOLDER}?ref=${GITHUB_BRANCH}`;
+            const catData = await fetch(catUrl).then(r => r.json());
+
+            if (!Array.isArray(catData)) throw new Error('GitHub API limit reached fetching category list — please try again later.');
+
+            const categories = catData.filter(i => i.type === 'dir').map(i => i.name).sort();
+            if (!categories.length) throw new Error('No category folders found in data/features/');
+
+            // 3. File lists for all categories — each response guarded too
+            setProgress(0, 1, `Found ${categories.length} categories — fetching file lists…`);
+            const fileLists = await Promise.all(categories.map(cat =>
+                fetch(`https://api.github.com/repos/${GITHUB_USER}/${GITHUB_REPO}/contents/${FEAT_FOLDER}/${cat}?ref=${GITHUB_BRANCH}`)
+                    .then(r => r.json())
+                    .then(items => {
+                        if (!Array.isArray(items)) throw new Error(`GitHub API limit reached fetching files for "${cat}" — please try again later.`);
+                        return items.filter(i => i.name.endsWith('.json')).map(i => ({
+                            cat,
+                            name: i.name,
+                            soundClass: i.name.replace(/\.json$/, '').replace(/_\d+.*$/, ''),
+                        }));
+                    })
+            ));
+
+            allFiles = fileLists.flat();
+            saveCache(allFiles); // store for next load
+        }
+
+        const total = allFiles.length;
+        if (!total) throw new Error('No .json feature files found — run the extraction notebook first.');
+
+        // Build soundClass → folder map (for bar colouring)
+        const soundClassFolder = {};
+        allFiles.forEach(({ cat, soundClass }) => { soundClassFolder[soundClass] = cat; });
+
+        // 4. Fetch all feature JSONs in parallel, tracking progress
+        //    These go via raw.githubusercontent.com, not rate-limited
+        let done = 0;
+        setProgress(0, total, `Loading 0 / ${total} feature files…`);
+
+        const results = await Promise.all(allFiles.map(({ cat, name, soundClass }) =>
+            fetch(`${FEAT_BASE}/${cat}/${name}`)
+                .then(r => { if (!r.ok) throw new Error(`HTTP ${r.status}: ${cat}/${name}`); return r.json(); })
+                .then(data => { setProgress(++done, total, `Loading ${done} / ${total} feature files…`); return { cat, soundClass, data }; })
+        ));
+
+        // 5. Compute per-sound-class averages for each feature
+        setProgress(total, total, 'Computing averages…');
+
+        const soundClasses = [...new Set(allFiles.map(f => f.soundClass))].sort();
+        let extractionWarnings = 0;
+
+        const categoryAverages = {};
+        for (const def of FEATURE_DEFS) {
+            categoryAverages[def.key] = {};
+            for (const sc of soundClasses) {
+                const vals = results
+                    .filter(r => r.soundClass === sc)
+                    .map(r => {
+                        try { return def.extract(r.data); }
+                        catch (e) {
+                            extractionWarnings++;
+                            console.warn(`[${def.key}] Failed for ${r.soundClass}:`, e.message);
+                            return null;
+                        }
+                    })
+                    .filter(v => v !== null && isFinite(v));
+                categoryAverages[def.key][sc] = vals.length ? mean(vals) : null;
+            }
+        }
+
+        // 6. Render
+        renderSummary(soundClasses, total, fromCache, extractionWarnings);
+        renderAllPlots(categoryAverages, soundClassFolder);
+
+        document.getElementById('progressArea').style.display = 'none';
+        btn.disabled    = false;
+        btn.textContent = 'Load All & Plot';
+
+    } catch (err) {
+        showError(`Error: ${err.message}`);
+        document.getElementById('progressArea').style.display = 'none';
+        btn.disabled    = false;
+        btn.textContent = 'Load All & Plot';
+        console.error(err);
+    }
+}
+
+// ── Summary info box ──────────────────────────────────────────────────────────
+
+function renderSummary(soundClasses, total, fromCache, warnings = 0) {
+    const box = document.getElementById('summaryBox');
+    box.style.display = 'block';
+    const cacheNote = fromCache
+        ? ' <span>(file list loaded from cache)</span>'
+        : '';
+    const warningLine = warnings > 0
+        ? `<br><span style="color:#856404;">!!! <strong>${warnings} extraction warning(s)</strong> — check the browser console for details.</span>`
+        : '';
+    box.innerHTML = `
+        <div class="info-box">
+            <strong>Loaded:</strong> ${total} feature files across
+            <strong>${soundClasses.length} sound classes</strong>${cacheNote}:
+            ${soundClasses.join(', ')}
+            ${warningLine}
+        </div>`;
+}
+
+// ── Bar colour by parent folder ───────────────────────────────────────────────
+
+const NATURE_FOLDERS = new Set(['nature', 'weather', 'animals']);
+const RED_FOLDERS    = new Set(['tools', 'transport']);
+const BLUE_FOLDERS   = new Set(['people']);
+
+function folderColor(folder) {
+    const f = (folder || '').toLowerCase();
+    if (NATURE_FOLDERS.has(f)) return '#2ca02c';
+    if (RED_FOLDERS.has(f))    return '#d62728';
+    if (BLUE_FOLDERS.has(f))   return '#1f77b4';
+    return '#888888';
+}
+
+// ── Plot all features ─────────────────────────────────────────────────────────
+
+function renderAllPlots(categoryAverages, soundClassFolder) {
+    const container = document.getElementById('plotsContainer');
+    container.innerHTML = '';
+
+    const grid = document.createElement('div');
+    grid.className = 'plot-grid';
+    container.appendChild(grid);
+
+    for (const def of FEATURE_DEFS) {
+        const avgs = categoryAverages[def.key];
+
+        const sorted = Object.entries(avgs)
+            .filter(([, v]) => v !== null)
+            .sort(([, a], [, b]) => a - b);
+
+        if (!sorted.length) continue;
+
+        const xLabels = sorted.map(([sc]) => sc);
+        const yVals   = sorted.map(([, v]) => v);
+        const colors  = sorted.map(([sc]) => folderColor(soundClassFolder[sc]));
+
+        const wrap = document.createElement('div');
+        wrap.className = 'plot-wrap';
+        wrap.innerHTML = `
+            <div class="section-title">${def.title}</div>
+            <div class="feature-desc">${def.desc}</div>
+            <div id="dist_${def.key}"></div>
+        `;
+        grid.appendChild(wrap);
+
+        const yLabel = def.unit ? `${def.title} (${def.unit})` : def.title;
+
+        Plotly.newPlot(`dist_${def.key}`, [{
+            x: xLabels,
+            y: yVals,
+            type: 'bar',
+            marker: { color: colors, opacity: 0.85 },
+            hovertemplate: '<b>%{x}</b><br>' + yLabel + ': %{y:.4f}<extra></extra>',
+        }], {
+            xaxis: { title: 'Sound class', tickangle: -90, automargin: true },
+            yaxis: { title: yLabel, automargin: true },
+            margin: { l: 55, r: 20, t: 20, b: 40 },
+        }, { responsive: true });
+    }
+}
+</script>
+
+</body>
+</html>
