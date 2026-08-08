@@ -6,6 +6,212 @@
 <title>Data</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="stylesheet" href="styles.css">
+<script src="https://d3js.org/d3.v7.min.js"></script>
+<style>
+    .meta-controls {
+        background: white;
+        padding: 20px;
+        margin: 20px 0;
+        border-radius: 8px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    .meta-control-row {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 12px;
+        margin: 12px 0;
+    }
+    .meta-control-row label {
+        font-weight: bold;
+        color: #171E2E;
+        font-size: 15px;
+    }
+    .meta-controls input[type="text"],
+    .meta-controls select {
+        padding: 10px;
+        font-size: 15px;
+        border: 2px solid #ddd;
+        border-radius: 5px;
+    }
+    #metaSearchInput { min-width: 220px; flex: 1; }
+    .meta-controls button {
+        padding: 9px 18px;
+        font-size: 14px;
+        background-color: #6c757d;
+        color: white;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+    }
+    .meta-controls button:hover { background-color: #565e64; }
+    .meta-count-line { color: #444; font-size: 14px; margin: 4px 0 0; }
+    #metaLoading, #metaErrorBox { text-align: center; padding: 30px; font-size: 16px; }
+    .meta-error-box {
+        background: #f8d7da;
+        border: 1px solid #f5c2c7;
+        border-radius: 5px;
+        padding: 15px;
+        margin: 15px 0;
+        color: #58151c;
+        text-align: left;
+        font-size: 14px;
+    }
+    .meta-table-wrap {
+        background: white;
+        padding: 10px 20px 20px;
+        margin: 20px 0 90px; /* leave room for the sticky player so it never overlaps rows */
+        border-radius: 8px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        overflow-x: auto;
+    }
+    table.meta-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 14px;
+    }
+    table.meta-table th {
+        text-align: left;
+        padding: 10px 12px;
+        border-bottom: 2px solid #171E2E;
+        color: #171E2E;
+        white-space: nowrap;
+    }
+    table.meta-table td {
+        padding: 8px 12px;
+        border-bottom: 1px solid #e5e5e5;
+        color: #333;
+        vertical-align: middle;
+    }
+    table.meta-table td:nth-child(6) { white-space: nowrap; }
+    table.meta-table td:nth-child(19) { white-space: nowrap; }
+    .col-info {
+        position: relative;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 13px;
+        height: 13px;
+        border-radius: 50%;
+        border: 1px solid #99a;
+        color: #99a;
+        font-family: Georgia, 'Times New Roman', serif;
+        font-style: italic;
+        font-size: 10px;
+        line-height: 1;
+        cursor: help;
+        margin-left: 4px;
+    }
+    .col-info::after {
+        content: attr(data-tooltip);
+        position: absolute;
+        bottom: 130%;
+        left: 50%;
+        transform: translateX(-50%);
+        background: #171E2E;
+        color: #fff;
+        padding: 5px 9px;
+        border-radius: 4px;
+        font-family: Abel, sans-serif;
+        font-style: normal;
+        font-size: 12px;
+        white-space: nowrap;
+        z-index: 300;
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.1s ease;
+    }
+    .col-info:hover::after { opacity: 1; }
+    table.meta-table tr:hover td { background-color: #f4f8f6; }
+    table.meta-table tr.playing td { background-color: #e6f4ea; }
+    .top-cat-tag {
+        display: inline-block;
+        padding: 2px 10px;
+        border-radius: 12px;
+        font-size: 13px;
+        white-space: nowrap;
+        color: #171E2E;
+        font-weight: bold;
+    }
+    .top-cat-Nature  { background: #BDD7CD; }
+    .top-cat-Human   { background: #E7D3B4; }
+    .top-cat-Manmade { background: #C9D6E3; }
+    .sub-cat-tag {
+        display: inline-block;
+        background: #eee;
+        color: #333;
+        padding: 2px 9px;
+        border-radius: 10px;
+        font-size: 12px;
+        white-space: nowrap;
+    }
+    .play-btn {
+        border: none;
+        background: #171E2E;
+        color: #fff;
+        width: 30px;
+        height: 30px;
+        padding: 0;
+        margin: 0;
+        box-sizing: border-box;
+        border-radius: 50%;
+        cursor: pointer;
+        font-size: 12px;
+        line-height: 1;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+    }
+    .play-btn:hover { background: #333d55; }
+    .play-btn.is-playing { background: #28a745; }
+    .meta-catalogue-link { font-size: 13px; text-decoration: underline; white-space: nowrap; }
+    .meta-pagination {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 14px;
+        margin: 18px 0 6px;
+        font-size: 14px;
+        color: #171E2E;
+    }
+    .meta-pagination button {
+        padding: 8px 16px;
+        font-size: 14px;
+        background-color: #6c757d;
+        color: white;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+    }
+    .meta-pagination button:hover { background-color: #565e64; }
+    .meta-pagination button:disabled { background-color: #ccc; cursor: not-allowed; }
+
+    /* Sticky bottom audio player */
+    #metaPlayerBar {
+        position: fixed;
+        left: 0; right: 0; bottom: 0;
+        background: #171E2E;
+        color: #fff;
+        padding: 10px 20px;
+        display: none;
+        align-items: center;
+        gap: 16px;
+        z-index: 200;
+        box-shadow: 0 -2px 8px rgba(0,0,0,0.25);
+    }
+    #metaPlayerBar.active { display: flex; }
+    #metaNowPlayingLabel { font-size: 14px; flex-shrink: 0; }
+    #metaPlayerBar audio { flex: 1; height: 32px; }
+    #metaClosePlayer {
+        background: transparent;
+        border: none;
+        color: #fff;
+        font-size: 18px;
+        cursor: pointer;
+        padding: 0 6px;
+    }
+</style>
 </head>
 
 <body id="research">
@@ -142,6 +348,400 @@
 </h3>
 
 <a href="https://download-directory.github.io/?url=https://github.com/mkachlicka/envisounds_dataset/tree/main/audio_files" target="_blank"><button type="submit"><i class="fa fa-download"></i> Dataset Download</button></a>
+
+<div id="metaLoading">Loading sound metadata from GitHub&hellip;</div>
+<div id="metaErrorBox" style="display:none;"></div>
+
+<div id="metaContent" style="display:none;">
+
+    <div class="meta-controls">
+        <div class="meta-control-row">
+            <label for="metaSearchInput"><i class="fa fa-search"></i> Search:</label>
+            <input type="text" id="metaSearchInput" placeholder="Filter by sound, source, or notes&hellip;">
+            <label for="metaCategoryFilter">Category:</label>
+            <select id="metaCategoryFilter">
+                <option value="">All categories</option>
+            </select>
+            <label for="metaSubcategoryFilter">Subcategory:</label>
+            <select id="metaSubcategoryFilter">
+                <option value="">All subcategories</option>
+            </select>
+            <button onclick="resetMetaFilters()">Reset</button>
+        </div>
+        <p class="meta-count-line" id="metaCountLine"></p>
+    </div>
+
+    <div class="meta-table-wrap">
+        <table class="meta-table">
+            <thead>
+                <tr>
+                    <th></th>
+                    <th>#</th>
+                    <th>Sound</th>
+                    <th>Category</th>
+                    <th>Subcategory</th>
+                    <th>Source</th>
+                    <th>Original file name</th>
+                    <th>Duration</th>
+                    <th>Sample rate</th>
+                    <th>Total samples</th>
+                    <th>Channels</th>
+                    <th>Bits/sample</th>
+                    <th>Type <span class="col-info" title="TBC" data-tooltip="TBC">i</span></th>
+                    <th>Background noise <span class="col-info" title="TBC" data-tooltip="TBC">i</span></th>
+                    <th>Masking effect <span class="col-info" title="TBC" data-tooltip="TBC">i</span></th>
+                    <th>Movement <span class="col-info" title="TBC" data-tooltip="TBC">i</span></th>
+                    <th>Distance <span class="col-info" title="TBC" data-tooltip="TBC">i</span></th>
+                    <th>Sound source <span class="col-info" title="TBC" data-tooltip="TBC">i</span></th>
+                    <th>Notes</th>
+                    <th>Features</th>
+                </tr>
+            </thead>
+            <tbody id="metaTableBody"></tbody>
+        </table>
+        <div class="meta-pagination">
+            <button id="metaPrevPageBtn" onclick="changeMetaPage(-1)">&larr; Prev</button>
+            <span id="metaPageLabel"></span>
+            <button id="metaNextPageBtn" onclick="changeMetaPage(1)">Next &rarr;</button>
+        </div>
+    </div>
+
+</div>
+
+<script>
+    (function () {
+        const META_USER   = 'mkachlicka';
+        const META_REPO   = 'envisounds_dataset';
+        const META_BRANCH = 'main';
+        const META_CSV_URL = `https://raw.githubusercontent.com/${META_USER}/${META_REPO}/${META_BRANCH}/audio_files/envisounds_metadata.csv`;
+
+        const META_PAGE_SIZE = 50;
+        const RAW_BASE = `https://raw.githubusercontent.com/${META_USER}/${META_REPO}/${META_BRANCH}`;
+
+        // audio_files/ (and data/features/) are organised into 6 folders that
+        // don't match the CSV's Category/Subcategory labels 1:1. This maps each
+        // CSV Subcategory to the folder its files actually live in.
+        const SUBCATEGORY_TO_FOLDER = {
+            'animals': 'animals',
+            'environment': 'nature',
+            'motor': 'people',
+            'motor & vocal': 'people',
+            'respiratory': 'people',
+            'respiratory & vocal': 'people',
+            'tools': 'tools',
+            'transport': 'transport',
+            'vocal nonspeech': 'people',
+            'vocal speech': 'people',
+            'weather': 'weather',
+        };
+
+        // These 42 files were renamed on disk (a lowercase "new" inserted
+        // before "_MONO") after the metadata CSV was written. Same files,
+        // different filename - this list lets playback/feature links resolve
+        // to the current filename automatically.
+        const RENAMED_FILES = new Set([
+            'BirdSquawk_04_MONO','BirdSquawk_07_MONO','CowMoo_07_MONO','DogGrowling_05_MONO',
+            'DogHowling_02_MONO','DogHowling_03_MONO','DogHowling_05_MONO','HorseGalloping_04_MONO',
+            'HorseNeighing_09_MONO','HorseSnorting_06_MONO','River_03_MONO','River_04_MONO',
+            'SeaWaves_01_MONO','CocktailParty_10_MONO','CryingAdultMale_04_MONO','CryingAdultMale_05_MONO',
+            'CryingAdultMale_07_MONO','CryingAdultMale_10_MONO','LaughingAdultFemale_03_MONO','LaughingAdultFemale_04_MONO',
+            'DrillingPneumatic_02_MONO','DrillingPneumatic_04_MONO','Drilling_09_MONO','Sawing_05_MONO',
+            'Sawing_07_MONO','CarSkidding_06_MONO','CarSkidding_07_MONO','Helicopter_02_MONO',
+            'Helicopter_05_MONO','Helicopter_10_MONO','Propeller_03_MONO','Propeller_04_MONO',
+            'TrainBreaks_02_MONO','TrainBreaks_04_MONO','TrainBreaks_06_MONO','TrainBreaks_08_MONO',
+            'TrainBreaks_09_MONO','TrainWagons_02_MONO','TrainWagons_09_MONO','Wind_03_MONO',
+            'Wind_08_MONO','Wind_10_MONO',
+        ]);
+
+        function onDiskName(fileName) {
+            return RENAMED_FILES.has(fileName) ? fileName.replace(/_MONO$/, 'new_MONO') : fileName;
+        }
+
+        let currentlyPlayingLp = null;
+
+        let allSounds       = [];
+        let filteredSounds  = [];
+        let metaCurrentPage = 1;
+
+        const TYPE_LABELS = { F: 'F', B: 'B', FB: 'FB' };
+
+        function stripQuotes(str) {
+            return String(str || '').replace(/^'+|'+$/g, '').trim();
+        }
+
+        async function loadMetadata() {
+            try {
+                const resp = await fetch(META_CSV_URL);
+                if (!resp.ok) throw new Error(`Metadata file request failed (${resp.status}).`);
+                const text = await resp.text();
+                const rows = d3.csvParse(text);
+
+                allSounds = rows
+                    .filter(r => r.FileName && r.FileName.trim())
+                    .map(r => ({
+                        lp:          r.LP,
+                        fileName:    stripQuotes(r.FileName).replace(/\.wav$/i, ''),
+                        category:    r.Category,
+                        subcategory: r.Subcategory,
+                        database:    r.Database,
+                        originalName: stripQuotes(r.OriginalFileName),
+                        duration:    parseFloat(r.Duration),
+                        sampleRate:  r.SampleRate,
+                        totalSamples: r.TotalSamples,
+                        channels:    r.Channels,
+                        bitsPerSample: r.BitsPerSample,
+                        type:        r.Type,
+                        backgroundNoise: r.BackgroundNoise,
+                        maskingEffect: r.MaskingEffect,
+                        movement:    r.Movement,
+                        distance:    r.Distance,
+                        soundSource: r.SoundSource,
+                        notes:       r.Notes,
+                    }));
+
+                if (!allSounds.length) throw new Error('No sound entries found in the metadata file.');
+
+                populateMetaFilters();
+                filteredSounds = allSounds;
+
+                document.getElementById('metaLoading').style.display = 'none';
+                document.getElementById('metaContent').style.display = 'block';
+                renderMetaPage();
+
+            } catch (err) {
+                document.getElementById('metaLoading').style.display = 'none';
+                const box = document.getElementById('metaErrorBox');
+                box.style.display = 'block';
+                box.innerHTML = `<div class="meta-error-box"><strong>Couldn\u2019t load the sound metadata.</strong><br>${err.message}</div>`;
+                console.error(err);
+            }
+        }
+
+        function populateMetaFilters() {
+            const categories = [...new Set(allSounds.map(s => s.category))].filter(Boolean).sort();
+            const catSelect = document.getElementById('metaCategoryFilter');
+            categories.forEach(cat => {
+                const opt = document.createElement('option');
+                opt.value = opt.textContent = cat;
+                catSelect.appendChild(opt);
+            });
+            refreshSubcategoryOptions();
+        }
+
+        function refreshSubcategoryOptions(selectedCategory) {
+            const subSelect = document.getElementById('metaSubcategoryFilter');
+            const pool = selectedCategory
+                ? allSounds.filter(s => s.category === selectedCategory)
+                : allSounds;
+            const subs = [...new Set(pool.map(s => s.subcategory))].filter(Boolean).sort();
+
+            const prevValue = subSelect.value;
+            subSelect.innerHTML = '<option value="">All subcategories</option>';
+            subs.forEach(sub => {
+                const opt = document.createElement('option');
+                opt.value = opt.textContent = sub;
+                subSelect.appendChild(opt);
+            });
+            if (subs.includes(prevValue)) subSelect.value = prevValue;
+        }
+
+        function applyMetaFilters() {
+            const q   = document.getElementById('metaSearchInput').value.trim().toLowerCase();
+            const cat = document.getElementById('metaCategoryFilter').value;
+            const sub = document.getElementById('metaSubcategoryFilter').value;
+
+            filteredSounds = allSounds.filter(s => {
+                if (cat && s.category !== cat) return false;
+                if (sub && s.subcategory !== sub) return false;
+                if (!q) return true;
+                return (
+                    s.fileName.toLowerCase().includes(q) ||
+                    s.originalName.toLowerCase().includes(q) ||
+                    s.database.toLowerCase().includes(q) ||
+                    (s.notes || '').toLowerCase().includes(q)
+                );
+            });
+
+            metaCurrentPage = 1;
+            renderMetaPage();
+        }
+
+        function resetMetaFilters() {
+            document.getElementById('metaSearchInput').value = '';
+            document.getElementById('metaCategoryFilter').value = '';
+            refreshSubcategoryOptions();
+            document.getElementById('metaSubcategoryFilter').value = '';
+            filteredSounds = allSounds;
+            metaCurrentPage = 1;
+            renderMetaPage();
+        }
+        window.resetMetaFilters = resetMetaFilters;
+
+        document.getElementById('metaSearchInput').addEventListener('input', debounceMeta(applyMetaFilters, 200));
+        document.getElementById('metaCategoryFilter').addEventListener('change', () => {
+            refreshSubcategoryOptions(document.getElementById('metaCategoryFilter').value);
+            applyMetaFilters();
+        });
+        document.getElementById('metaSubcategoryFilter').addEventListener('change', applyMetaFilters);
+
+        function debounceMeta(fn, wait) {
+            let t;
+            return (...args) => { clearTimeout(t); t = setTimeout(() => fn(...args), wait); };
+        }
+
+        function changeMetaPage(delta) {
+            const maxPage = Math.max(1, Math.ceil(filteredSounds.length / META_PAGE_SIZE));
+            metaCurrentPage = Math.min(maxPage, Math.max(1, metaCurrentPage + delta));
+            renderMetaPage();
+        }
+        window.changeMetaPage = changeMetaPage;
+
+        function renderMetaPage() {
+            const total   = allSounds.length;
+            const shown   = filteredSounds.length;
+            const maxPage = Math.max(1, Math.ceil(shown / META_PAGE_SIZE));
+            metaCurrentPage = Math.min(metaCurrentPage, maxPage);
+
+            document.getElementById('metaCountLine').textContent = shown === total
+                ? `Showing all ${total} sounds.`
+                : `Showing ${shown} of ${total} sounds.`;
+
+            const start = (metaCurrentPage - 1) * META_PAGE_SIZE;
+            const pageItems = filteredSounds.slice(start, start + META_PAGE_SIZE);
+
+            const tbody = document.getElementById('metaTableBody');
+            tbody.innerHTML = '';
+
+            pageItems.forEach((s) => {
+                const rowId = `meta-row-${s.lp}`;
+                const tr = document.createElement('tr');
+                tr.id = rowId;
+                if (s.lp === currentlyPlayingLp) tr.classList.add('playing');
+
+                const folder = SUBCATEGORY_TO_FOLDER[s.subcategory];
+                const featuresUrl = folder
+                    ? `features.html?category=${encodeURIComponent(folder)}&sound=${encodeURIComponent(onDiskName(s.fileName))}`
+                    : 'features.html';
+
+                tr.innerHTML = `
+                    <td>
+                        <button class="play-btn" type="button" title="Play" onclick="playMetaSound('${escapeJsMeta(s.lp)}')">
+                            <i class="fa fa-play"></i>
+                        </button>
+                    </td>
+                    <td>${escapeHtmlMeta(s.lp)}</td>
+                    <td>${escapeHtmlMeta(s.fileName)}</td>
+                    <td><span class="top-cat-tag top-cat-${escapeHtmlMeta(s.category)}">${escapeHtmlMeta(s.category)}</span></td>
+                    <td><span class="sub-cat-tag">${escapeHtmlMeta(s.subcategory)}</span></td>
+                    <td>${escapeHtmlMeta(s.database)}</td>
+                    <td>${escapeHtmlMeta(s.originalName || '—')}</td>
+                    <td>${isFinite(s.duration) ? s.duration.toFixed(2) + ' s' : '—'}</td>
+                    <td>${s.sampleRate ? s.sampleRate + ' Hz' : '—'}</td>
+                    <td>${escapeHtmlMeta(s.totalSamples || '—')}</td>
+                    <td>${escapeHtmlMeta(s.channels || '—')}</td>
+                    <td>${escapeHtmlMeta(s.bitsPerSample || '—')}</td>
+                    <td>${escapeHtmlMeta(TYPE_LABELS[s.type] || s.type || '—')}</td>
+                    <td>${escapeHtmlMeta(s.backgroundNoise || '—')}</td>
+                    <td>${escapeHtmlMeta(s.maskingEffect || '—')}</td>
+                    <td>${escapeHtmlMeta(s.movement || '—')}</td>
+                    <td>${escapeHtmlMeta(s.distance || '—')}</td>
+                    <td>${escapeHtmlMeta(s.soundSource || '—')}</td>
+                    <td>${escapeHtmlMeta(s.notes || '—')}</td>
+                    <td><a class="meta-catalogue-link" href="${featuresUrl}">View features &rarr;</a></td>
+                `;
+                tbody.appendChild(tr);
+            });
+
+            document.getElementById('metaPageLabel').textContent = `Page ${metaCurrentPage} of ${maxPage}`;
+            document.getElementById('metaPrevPageBtn').disabled = metaCurrentPage <= 1;
+            document.getElementById('metaNextPageBtn').disabled = metaCurrentPage >= maxPage;
+
+            if (currentlyPlayingLp) highlightMetaPlayButton(currentlyPlayingLp, true);
+        }
+
+        // ── Playback ─────────────────────────────────────────────────────────
+
+        function playMetaSound(lp) {
+            const player = document.getElementById('metaAudioPlayer');
+
+            // Clicking the button for the row that's already loaded toggles play/pause
+            if (currentlyPlayingLp === lp) {
+                if (player.paused) {
+                    player.play().catch(err => console.warn('Playback failed:', err));
+                } else {
+                    player.pause();
+                }
+                return;
+            }
+
+            const sound = allSounds.find(s => s.lp === lp);
+            if (!sound) return;
+
+            const folder = SUBCATEGORY_TO_FOLDER[sound.subcategory];
+            if (!folder) {
+                console.warn('No known folder for subcategory:', sound.subcategory);
+                return;
+            }
+
+            const diskName = onDiskName(sound.fileName);
+            const wavUrl = `${RAW_BASE}/audio_files/${folder}/${diskName}.wav`;
+
+            if (currentlyPlayingLp) highlightMetaPlayButton(currentlyPlayingLp, false);
+            currentlyPlayingLp = lp;
+
+            player.src = wavUrl;
+            player.play().catch(err => console.warn('Playback failed:', err));
+
+            document.getElementById('metaNowPlayingLabel').innerHTML =
+                `<span class="sub-cat-tag" style="background:#BDD7CD;">${escapeHtmlMeta(sound.subcategory)}</span> &nbsp;${escapeHtmlMeta(sound.fileName)}`;
+            document.getElementById('metaPlayerBar').classList.add('active');
+        }
+        window.playMetaSound = playMetaSound;
+
+        // Keep the row's button in sync with the actual player state, whether
+        // playback was started/stopped from the row button or the bar's own
+        // native controls. Deferred until DOMContentLoaded because the
+        // <audio> element is further down the page than this <script> block.
+        document.addEventListener('DOMContentLoaded', function () {
+            const player = document.getElementById('metaAudioPlayer');
+            if (!player) return;
+            player.addEventListener('play',  () => { if (currentlyPlayingLp) highlightMetaPlayButton(currentlyPlayingLp, true); });
+            player.addEventListener('pause', () => { if (currentlyPlayingLp) highlightMetaPlayButton(currentlyPlayingLp, false); });
+            player.addEventListener('ended', () => { if (currentlyPlayingLp) highlightMetaPlayButton(currentlyPlayingLp, false); });
+        });
+
+        function highlightMetaPlayButton(lp, isPlaying) {
+            const row = document.getElementById(`meta-row-${lp}`);
+            if (!row) return;
+            row.classList.toggle('playing', isPlaying);
+            const btn = row.querySelector('.play-btn');
+            if (btn) {
+                btn.classList.toggle('is-playing', isPlaying);
+                btn.innerHTML = isPlaying ? '<i class="fa fa-pause"></i>' : '<i class="fa fa-play"></i>';
+            }
+        }
+
+        function closeMetaPlayer(event) {
+            if (event) { event.preventDefault(); event.stopPropagation(); }
+            const player = document.getElementById('metaAudioPlayer');
+            player.pause();
+            document.getElementById('metaPlayerBar').classList.remove('active');
+            if (currentlyPlayingLp) highlightMetaPlayButton(currentlyPlayingLp, false);
+            currentlyPlayingLp = null;
+        }
+        window.closeMetaPlayer = closeMetaPlayer;
+
+        function escapeJsMeta(str) { return String(str).replace(/'/g, "\\'"); }
+
+        function escapeHtmlMeta(str) {
+            return String(str).replace(/[&<>"']/g, c => ({
+                '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;',
+            }[c]));
+        }
+
+        loadMetadata();
+    })();
+</script>
 
 </div>
 
@@ -286,5 +886,12 @@
 </div>
 
 </div> 
+<!-- STICKY AUDIO PLAYER -->
+<div id="metaPlayerBar">
+    <span id="metaNowPlayingLabel">Nothing playing</span>
+    <audio id="metaAudioPlayer" controls></audio>
+    <button id="metaClosePlayer" type="button" onclick="closeMetaPlayer(event)" title="Close player"><i class="fa fa-times"></i></button>
+</div>
+
 </body>
 </html>
