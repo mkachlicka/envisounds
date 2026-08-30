@@ -1,0 +1,1624 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<title>Data</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="stylesheet" href="styles.css">
+<script src="https://d3js.org/d3.v7.min.js"></script>
+<style>
+    .meta-controls {
+        background: white;
+        padding: 20px;
+        margin: 20px 0;
+        border-radius: 8px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    .meta-control-row {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 12px;
+        margin: 12px 0;
+    }
+    .meta-control-row label {
+        font-weight: bold;
+        color: #171E2E;
+        font-size: 15px;
+    }
+    .meta-controls input[type="text"],
+    .meta-controls select {
+        padding: 10px;
+        font-size: 15px;
+        border: 2px solid #ddd;
+        border-radius: 5px;
+    }
+    #metaSearchInput { min-width: 220px; flex: 1; }
+    .meta-controls button {
+        padding: 9px 18px;
+        font-size: 14px;
+        background-color: #6c757d;
+        color: white;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+    }
+    .meta-controls button:hover { background-color: #565e64; }
+    .meta-count-line { color: #444; font-size: 14px; margin: 4px 0 0; }
+    #metaLoading, #metaErrorBox { text-align: center; padding: 30px; font-size: 16px; }
+    .meta-error-box {
+        background: #f8d7da;
+        border: 1px solid #f5c2c7;
+        border-radius: 5px;
+        padding: 15px;
+        margin: 15px 0;
+        color: #58151c;
+        text-align: left;
+        font-size: 14px;
+    }
+    .meta-table-wrap {
+        background: white;
+        padding: 10px 20px 20px;
+        margin: 20px 0 90px; /* leave room for the sticky player so it never overlaps rows */
+        border-radius: 8px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        overflow-x: auto;
+    }
+    table.meta-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 14px;
+    }
+    table.meta-table th {
+        text-align: left;
+        padding: 10px 12px;
+        border-bottom: 2px solid #171E2E;
+        color: #171E2E;
+        white-space: nowrap;
+    }
+    table.meta-table td {
+        padding: 8px 12px;
+        border-bottom: 1px solid #e5e5e5;
+        color: #333;
+        vertical-align: middle;
+    }
+    table.meta-table td:nth-child(6) { white-space: nowrap; }
+    table.meta-table td:nth-child(19) { white-space: nowrap; }
+    .col-info {
+        position: relative;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 13px;
+        height: 13px;
+        border-radius: 50%;
+        border: 1px solid #99a;
+        color: #99a;
+        font-family: Georgia, 'Times New Roman', serif;
+        font-style: italic;
+        font-size: 10px;
+        line-height: 1;
+        cursor: help;
+        margin-left: 4px;
+    }
+    .col-info::after {
+        content: attr(data-tooltip);
+        position: absolute;
+        bottom: 130%;
+        left: 50%;
+        transform: translateX(-50%);
+        background: #171E2E;
+        color: #fff;
+        padding: 5px 9px;
+        border-radius: 4px;
+        font-family: Abel, sans-serif;
+        font-style: normal;
+        font-size: 12px;
+        white-space: nowrap;
+        z-index: 300;
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.1s ease;
+    }
+    .col-info:hover::after { opacity: 1; }
+    table.meta-table tr:hover td { background-color: #f4f8f6; }
+    table.meta-table tr.playing td { background-color: #e6f4ea; }
+    .top-cat-tag {
+        display: inline-block;
+        padding: 2px 10px;
+        border-radius: 12px;
+        font-size: 13px;
+        white-space: nowrap;
+        color: #171E2E;
+        font-weight: bold;
+    }
+    .top-cat-Nature  { background: #BDD7CD; }
+    .top-cat-Human   { background: #E7D3B4; }
+    .top-cat-Manmade { background: #C9D6E3; }
+    .sub-cat-tag {
+        display: inline-block;
+        background: #eee;
+        color: #333;
+        padding: 2px 9px;
+        border-radius: 10px;
+        font-size: 12px;
+        white-space: nowrap;
+    }
+    .play-btn {
+        border: none;
+        background: #171E2E;
+        color: #fff;
+        width: 30px;
+        height: 30px;
+        padding: 0;
+        margin: 0;
+        box-sizing: border-box;
+        border-radius: 50%;
+        cursor: pointer;
+        font-size: 12px;
+        line-height: 1;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+    }
+    .play-btn:hover { background: #333d55; }
+    .play-btn.is-playing { background: #28a745; }
+    .meta-catalogue-link { font-size: 13px; text-decoration: underline; white-space: nowrap; }
+    .meta-pagination {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 14px;
+        margin: 18px 0 6px;
+        font-size: 14px;
+        color: #171E2E;
+    }
+    .meta-pagination button {
+        padding: 8px 16px;
+        font-size: 14px;
+        background-color: #6c757d;
+        color: white;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+    }
+    .meta-pagination button:hover { background-color: #565e64; }
+    .meta-pagination button:disabled { background-color: #ccc; cursor: not-allowed; }
+
+    /* Sticky bottom audio player */
+    #metaPlayerBar {
+        position: fixed;
+        left: 0; right: 0; bottom: 0;
+        background: #171E2E;
+        color: #fff;
+        padding: 10px 20px;
+        display: none;
+        align-items: center;
+        gap: 16px;
+        z-index: 200;
+        box-shadow: 0 -2px 8px rgba(0,0,0,0.25);
+    }
+    #metaPlayerBar.active { display: flex; }
+    #metaNowPlayingLabel { font-size: 14px; flex-shrink: 0; }
+    #metaPlayerBar audio { flex: 1; height: 32px; }
+    #metaClosePlayer {
+        background: transparent;
+        border: none;
+        color: #fff;
+        font-size: 18px;
+        cursor: pointer;
+        padding: 0 6px;
+    }
+</style>
+</head>
+
+<body id="research">
+
+<style>
+#more, #more-intro, #more-acoustics, #more-norms{display: none;}
+</style>
+
+<script>
+// function myFunction() {
+//   var dots = document.getElementById("dots");
+//   var moreText = document.getElementById("more");
+//   var btnText = document.getElementById("myBtn");
+
+//   if (dots.style.display === "none") {
+//     dots.style.display = "inline";
+//     btnText.innerHTML = "Read more"; 
+//     moreText.style.display = "none";
+//   } else {
+//     dots.style.display = "none";
+//     btnText.innerHTML = "Read less"; 
+//     moreText.style.display = "inline";
+//   }
+// }
+  function toggleSection(suffix) {
+    var dots    = document.getElementById("dots-" + suffix);
+    var more    = document.getElementById("more-" + suffix);
+    var btn     = document.getElementById("myBtn-" + suffix);
+    /*var isOpen  = dots.style.display === "none";*/
+    var isOpen = more.style.display === "none" || more.style.display === "";
+
+    /*dots.style.display = isOpen ? "inline" : "none";
+    more.style.display = isOpen ? "none"   : "inline";*/
+      dots.style.display = isOpen ? "none"     : "inline";
+  more.style.display = isOpen ? "inline"   : "none";
+    //btn.innerHTML      = isOpen ? "Read more" : "Read less";
+    btn.innerHTML      = isOpen ? "Read less" : "Read more";
+  }
+</script>
+
+
+<!-- HEADER -->
+
+<div id="menu">
+<nav>
+
+<input type="checkbox" id="show-menu" role="button">
+
+<label for="show-menu" class="open"><span class="fa fa-bars"></span></label>
+<label for="show-menu" class="close"><span class="fa fa-times"></span></label>
+
+<ul id="topnav" >
+	<ul class="logo-list"> <!-- style="width: 20%; float:left;">  -->
+		<li><img src="images/ERC-Logo-Black.png" alt="Logo" class="logo" height="40"></li>
+		<li><img src="images/BBK-Logo-Black.png" alt="Logo" class="logo" height="40"></li>
+		<li><img src="images/UCL-Logo-Black.png" alt="Logo" class="logo" height="40"></li>
+	</ul>
+
+	<ul class="menu-items"> <!-- style="width: 20%; float:right;"> -->
+		<li><a href="index.html">Home</a></li>
+		<li><a href="about.html">About</a></li>
+		<li><a href="dataset.html">Dataset</a></li>
+		<li><a href="research.html">Research</a></li>
+		<!--<li><a href="team.html">Team</a></li>-->
+	</ul>
+</ul>
+</nav>
+</div> 
+
+
+<!-- TITLE -->
+
+<div id="container">
+<div id="pageheader">
+<h1>EnviSounds Dataset</h1>
+</div> 
+
+
+<div class="section">
+	<!--<h1>Publications and presentations</h1>-->
+
+<!--<div class="pageitem">
+<h2>Publications</h2>
+<h3>
+<p> Saito, K., Petrova, K., Suzukida, Y., <b>Kachlicka, M.</b>, & Tierney, A. (2022). 
+	<a href="https://psycnet.apa.org/doi/10.1037/xhp0001042" target="_blank"> 'Training auditory processing promotes second language speech acquisition'</a>, 
+	<em>Journal of Experimental Psychology: Human Perception and Performance</em>, 48(12), 1410–1426. </p>
+
+</h3>
+</div>
+
+<div class="pageitem">
+<h2>Conference papers</h2>
+<h3>
+<p> Mitchell, A., Oberman, T., Aletta, F., Erfanian, M., <b>Kachlicka, M.</b>, Lionello, M., & Kang, J. (2020).
+	<a href="https://doi.org/10.1121/1.5136970" target="_blank"> 'Making cities smarter with new soundscape indices'</a>,
+	<em>The Journal of the Acoustical Society of America</em>, 146, 2873. </p>
+</h3>
+</div>
+
+<a id="anchor-name">The  name where you want to jump</a>
+
+
+-->
+<div class="pageitem">
+	<h2 id="intro">How to navigate the dataset?</h2>
+<h3>
+<p>(1) To simply download the dataset as a zipfile, please click the "Download Full Dataset" button below. It will download a zipped folder with all the sounds, norms and data, along with the accompanying scripts and a README file.</p>
+<p>(2) To better understand the dataset, we recommend reading through all the sections below that discuss the sounds, their acoustics, semantics and norms in more detail. Each section can be expanded after clicking the "Read more" button. It also contains a corresponding "Download" button that will allow you to download the relevant data discussed in a given section.</p>
+</h3>
+
+<a href="https://github.com/mkachlicka/envisounds_dataset/archive/refs/heads/main.zip" target="_blank"><button type="submit"><i class="fa fa-download"></i> Download Full Dataset</button></a>
+
+<a href="#sounds"><button type="submit"><i class="fa fa-headphones"></i> Listen to sounds</button></a>
+
+<h3>
+<p style="margin-top:20px;">(3) You can also explore the dataset interactively at the bottom of this page, using: <a href="similarities.html">(1) similarity metrics</a>, <a href="features.html">(2) acoustic features</a>, and <a href="feature_distributions.html">(3) distributions of features</a> across categories. A preview of each is shown below.</p>
+</h3>
+
+<div style="display:grid; grid-template-columns:repeat(3, 1fr); gap:25px; margin-top:15px; width:100%;">
+
+	<div>
+		<div style="display:grid; grid-template-columns:1fr 1fr; gap:4px; border-radius:8px; box-shadow:0 2px 4px rgba(0,0,0,0.1); overflow:hidden;">
+			<img src="images/newplot_1_good.png" alt="Goodness of exemplar preview" style="display:block; width:100%; height:auto; aspect-ratio:1/1; object-fit:cover;">
+			<img src="images/newplot_1_mds3d.png" alt="MDS 3D preview" style="display:block; width:100%; height:auto; aspect-ratio:1/1; object-fit:cover;">
+			<img src="images/newplot_1_mds2s.png" alt="MDS 2D preview" style="display:block; width:100%; height:auto; aspect-ratio:1/1; object-fit:cover;">
+			<img src="images/newplot_1_sim.png" alt="Similarity matrix preview" style="display:block; width:100%; height:auto; aspect-ratio:1/1; object-fit:cover;">
+		</div>
+		<p style="margin:8px 10px; font-size:14px; text-align:center;">1. Similarity metrics</p>
+	</div>
+
+	<div>
+		<div style="display:grid; grid-template-columns:1fr 1fr; gap:4px; border-radius:8px; box-shadow:0 2px 4px rgba(0,0,0,0.1); overflow:hidden;">
+			<img src="images/newplot_2_wav.png" alt="Waveform preview" style="display:block; width:100%; height:auto; aspect-ratio:1/1; object-fit:cover;">
+			<img src="images/newplot_2_spec.png" alt="Spectrogram preview" style="display:block; width:100%; height:auto; aspect-ratio:1/1; object-fit:cover;">
+			<img src="images/newplot_2_amp.png" alt="Amplitude preview" style="display:block; width:100%; height:auto; aspect-ratio:1/1; object-fit:cover;">
+			<img src="images/newplot_2_hnr.png" alt="HNR preview" style="display:block; width:100%; height:auto; aspect-ratio:1/1; object-fit:cover;">
+		</div>
+		<p style="margin:8px 10px; font-size:14px; text-align:center;">2. Acoustic features</p>
+	</div>
+
+    <div>
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:4px; border-radius:8px; box-shadow:0 2px 4px rgba(0,0,0,0.1); overflow:hidden;">
+            <img src="images/newplot_3_tempc.png" alt="Temporal centroid preview" style="display:block; width:100%; height:auto; aspect-ratio:1/1; object-fit:cover;">
+            <img src="images/newplot_3_loud.png" alt="Loudness preview" style="display:block; width:100%; height:auto; aspect-ratio:1/1; object-fit:cover;">
+            <img src="images/newplot_3_amp.png" alt="Amplitude preview" style="display:block; width:100%; height:auto; aspect-ratio:1/1; object-fit:cover;">
+            <img src="images/newplot_3_rms.png" alt="RMS preview" style="display:block; width:100%; height:auto; aspect-ratio:1/1; object-fit:cover;">
+        </div>
+        <p style="margin:8px 10px; font-size:14px; text-align:center;">3. Distributions of features</p>
+    </div>
+
+</div>
+
+</div>
+
+<div class="pageitem">
+	<h2><a id="intro">Introduction</a></h2>
+<h3>
+<p>Sound categories included in the database were selected based on the sounds' overall ecological frequency of occurrence (Ballas, 1993), and membership in distinct subclasses of sounds (Schaefer, 1977) at different levels of abstraction to represent common and ‘easy to distinguish’ sound classes (Gemmeke et al., 2017). The top-level classes comprise: (1) human, (2) manmade or mechanical, and (3) sounds of nature or natural sounds, indicated in the number of reviewed taxonomies as the most general division between sound classes. These main groups can be further divided into multiple subcategories at a higher level of categorical abstraction, derived from consulting specialised lists of sounds (e.g., ornithology, entomology, and bioacoustics) and lists of sound categories and their annotations generously provided by FreeSound.org and BBC Archive. Each subcategory was composed of more basic-level classes (e.g., cars, cats, drills) chosen to reflect the most frequently occurring in environment and familiar agents and objects. For example, when selecting animals, cats and dogs were selected over donkeys or lions as these are more likely to appear in our everyday environment and expose listeners to natural acoustic variability within that class. Where possible, each basic class also consists of multiple types of sounds produced by the same source and uniquely associated with it.</p> <span id="dots-intro"></span><span id="more-intro">
+<p>Category selection process included the following 4 steps. (1) <u>Identification </u> included a thorough review of environmental sound taxonomies to identify a list of possible categories and their organisational criteria. (2) <u>Synthsesis</u> focused on extracting common structural characteristics to select categories that were most consistently indicated across various taxonomies. (3) <u>Specialization</u> ivolved exploring representative subcategories and consulting specialistic sound taxonomies and lists of classes from otehr databases to identify sounds produced by the same source. For example, although cats or dogs were included in most previous studies, both animals have more than one vocalization type in their repertoire. To correctly identify species- or source-specific sounds, appropriate literature was consulted (e.g., sounds produced by animals – cats, Pandeya & Lee, 2018; dogs, Molnar et al., 2008; birds, Briggs et al., 2012; sounds produced by cars, Morel et al., 2012; Park et al., 2019). (4) <u>Filtering</u> refers to the process of selecting the most frequently occuring and the most characteristic sounds for each class. First, lists of ecological frequency of everyday sounds (Ballas, 1993) and familiarity ratings (e.g., Marcell et al., 2000; Hocking et al., 2013; Burns & Rajan, 2019) were consulted. For example, familiarity ratings (with lower ranks representing more familiar sounds) indicated the sounds produced by a dog (M=1.3), cat (M=1.22), horse (M=1.27) and cow (M=1.54) are more familiar than other animals such as donkey (M=2.6), bear (M=3.31), goat (M=2.04) or lion (M=2.42; a full list of familiarity ratings can be found in Hocking et al., 2013). Then, for each of those selected objects or agents, we selected the most characteristic sounds. For example, sounds of dogs included sounds of barking or howling, but not sounds of snoring or walking, which are not distinctive for a dog (i.e., other animals might be snoring or walking).</p>
+<p>The labels were constructed to be consistent grammatically and as generically descriptive as possible. They are all linguistic phrases derived from the most common labels occurring in the reviewed databases. Given that neither nouns nor verbs are sufficient to distinguish between certain sound classes (e.g., a 'dog' label does not differentiate between barking and growling; at the same time growling might not be indicative of a dog; Saygin, Dick, & Bates, 2005), we opted to include both, noun and verb (or its derivative) constructions in our labels. Their grammatical complexity was kept uniform by transforming all phrases into ‘noun + gerund’ forms. A similar approach was successfully exercised in previous research (e.g., Saygin, Dick, Wilson, Dronkers, & Bates, 2003). The same syntactic frame was used to construct the labels for all the sounds.</p>
+</span>
+
+<button onclick="toggleSection('intro')" id="myBtn-intro">Read more</button>
+
+</h3>
+</div>
+
+
+<div class="pageitem">
+	<h2><a id="sounds">Sounds</a></h2>
+<h3>
+<p>Stimuli 530 are natural sounds downloaded and manually edited from the following databases: <a href="https://freesound.org/">Free Sound</a>, <a href="http://bbcsfx.acropolis.org.uk/">BBC Sound Effects</a>, <a href="http://soundbible.com/">Sound Bible</a>, <a href="https://www.zapsplat.com/">Zapsplat</a>, <a href="http://www.orangefreesounds.com/">Orange Free Sounds</a>, Adobe Audition Sound Effects Library and <a href="https://www.youtube.com/">YouTube</a>.</p>
+</h3>
+
+<a href="https://download-directory.github.io/?url=https://github.com/mkachlicka/envisounds_dataset/tree/main/audio_files" target="_blank"><button type="submit"><i class="fa fa-download"></i> Dataset Download</button></a>
+
+<div id="metaLoading">Loading sound metadata from GitHub&hellip;</div>
+<div id="metaErrorBox" style="display:none;"></div>
+
+<div id="metaContent" style="display:none;">
+
+    <div class="meta-controls">
+        <div class="meta-control-row">
+            <label for="metaSearchInput"><i class="fa fa-search"></i> Search:</label>
+            <input type="text" id="metaSearchInput" placeholder="Filter by sound, source, or notes&hellip;">
+            <label for="metaCategoryFilter">Category:</label>
+            <select id="metaCategoryFilter">
+                <option value="">All categories</option>
+            </select>
+            <label for="metaSubcategoryFilter">Subcategory:</label>
+            <select id="metaSubcategoryFilter">
+                <option value="">All subcategories</option>
+            </select>
+            <button onclick="resetMetaFilters()">Reset</button>
+        </div>
+        <p class="meta-count-line" id="metaCountLine"></p>
+    </div>
+
+    <div class="meta-table-wrap">
+        <table class="meta-table">
+            <thead>
+                <tr>
+                    <th></th>
+                    <th>#</th>
+                    <th>Sound</th>
+                    <th>Category</th>
+                    <th>Subcategory</th>
+                    <th>Source</th>
+                    <th>Original file name</th>
+                    <th>Duration</th>
+                    <th>Sample rate</th>
+                    <th>Total samples</th>
+                    <th>Channels</th>
+                    <th>Bits/sample</th>
+                    <th>Type <span class="col-info" title="TBC" data-tooltip="TBC">i</span></th>
+                    <th>Background noise <span class="col-info" title="TBC" data-tooltip="TBC">i</span></th>
+                    <th>Masking effect <span class="col-info" title="TBC" data-tooltip="TBC">i</span></th>
+                    <th>Movement <span class="col-info" title="TBC" data-tooltip="TBC">i</span></th>
+                    <th>Distance <span class="col-info" title="TBC" data-tooltip="TBC">i</span></th>
+                    <th>Sound source <span class="col-info" title="TBC" data-tooltip="TBC">i</span></th>
+                    <th>Notes</th>
+                    <th>Features</th>
+                </tr>
+            </thead>
+            <tbody id="metaTableBody"></tbody>
+        </table>
+        <div class="meta-pagination">
+            <button id="metaPrevPageBtn" onclick="changeMetaPage(-1)">&larr; Prev</button>
+            <span id="metaPageLabel"></span>
+            <button id="metaNextPageBtn" onclick="changeMetaPage(1)">Next &rarr;</button>
+        </div>
+    </div>
+
+</div>
+
+<script>
+    (function () {
+        const META_USER   = 'mkachlicka';
+        const META_REPO   = 'envisounds_dataset';
+        const META_BRANCH = 'main';
+        const META_CSV_URL = `https://raw.githubusercontent.com/${META_USER}/${META_REPO}/${META_BRANCH}/audio_files/envisounds_metadata.csv`;
+
+        const META_PAGE_SIZE = 50;
+        const RAW_BASE = `https://raw.githubusercontent.com/${META_USER}/${META_REPO}/${META_BRANCH}`;
+
+        // audio_files/ (and data/features/) are organised into 6 folders that
+        // don't match the CSV's Category/Subcategory labels 1:1. This maps each
+        // CSV Subcategory to the folder its files actually live in.
+        const SUBCATEGORY_TO_FOLDER = {
+            'animals': 'animals',
+            'environment': 'nature',
+            'motor': 'people',
+            'motor & vocal': 'people',
+            'respiratory': 'people',
+            'respiratory & vocal': 'people',
+            'tools': 'tools',
+            'transport': 'transport',
+            'vocal nonspeech': 'people',
+            'vocal speech': 'people',
+            'weather': 'weather',
+        };
+
+        // These 42 files were renamed on disk (a lowercase "new" inserted
+        // before "_MONO") after the metadata CSV was written. Same files,
+        // different filename - this list lets playback/feature links resolve
+        // to the current filename automatically.
+        const RENAMED_FILES = new Set([
+            'BirdSquawk_04_MONO','BirdSquawk_07_MONO','CowMoo_07_MONO','DogGrowling_05_MONO',
+            'DogHowling_02_MONO','DogHowling_03_MONO','DogHowling_05_MONO','HorseGalloping_04_MONO',
+            'HorseNeighing_09_MONO','HorseSnorting_06_MONO','River_03_MONO','River_04_MONO',
+            'SeaWaves_01_MONO','CocktailParty_10_MONO','CryingAdultMale_04_MONO','CryingAdultMale_05_MONO',
+            'CryingAdultMale_07_MONO','CryingAdultMale_10_MONO','LaughingAdultFemale_03_MONO','LaughingAdultFemale_04_MONO',
+            'DrillingPneumatic_02_MONO','DrillingPneumatic_04_MONO','Drilling_09_MONO','Sawing_05_MONO',
+            'Sawing_07_MONO','CarSkidding_06_MONO','CarSkidding_07_MONO','Helicopter_02_MONO',
+            'Helicopter_05_MONO','Helicopter_10_MONO','Propeller_03_MONO','Propeller_04_MONO',
+            'TrainBreaks_02_MONO','TrainBreaks_04_MONO','TrainBreaks_06_MONO','TrainBreaks_08_MONO',
+            'TrainBreaks_09_MONO','TrainWagons_02_MONO','TrainWagons_09_MONO','Wind_03_MONO',
+            'Wind_08_MONO','Wind_10_MONO',
+        ]);
+
+        function onDiskName(fileName) {
+            return RENAMED_FILES.has(fileName) ? fileName.replace(/_MONO$/, 'new_MONO') : fileName;
+        }
+
+        // Display-only — strips the "_MONO" suffix for the table cell. The
+        // underlying fileName (with _MONO intact) is still used everywhere
+        // else: rename lookup, playback URL, and the features.html link.
+        function displayName(fileName) {
+            return fileName.replace(/_MONO$/i, '');
+        }
+
+        let currentlyPlayingLp = null;
+
+        let allSounds       = [];
+        let filteredSounds  = [];
+        let metaCurrentPage = 1;
+
+        const TYPE_LABELS = { F: 'F', B: 'B', FB: 'FB' };
+
+        function stripQuotes(str) {
+            return String(str || '').replace(/^'+|'+$/g, '').trim();
+        }
+
+        async function loadMetadata() {
+            try {
+                const resp = await fetch(META_CSV_URL);
+                if (!resp.ok) throw new Error(`Metadata file request failed (${resp.status}).`);
+                const text = await resp.text();
+                const rows = d3.csvParse(text);
+
+                allSounds = rows
+                    .filter(r => r.FileName && r.FileName.trim())
+                    .map(r => ({
+                        lp:          r.LP,
+                        fileName:    stripQuotes(r.FileName).replace(/\.wav$/i, ''),
+                        category:    r.Category,
+                        subcategory: r.Subcategory,
+                        database:    r.Database,
+                        originalName: stripQuotes(r.OriginalFileName),
+                        duration:    parseFloat(r.Duration),
+                        sampleRate:  r.SampleRate,
+                        totalSamples: r.TotalSamples,
+                        channels:    r.Channels,
+                        bitsPerSample: r.BitsPerSample,
+                        type:        r.Type,
+                        backgroundNoise: r.BackgroundNoise,
+                        maskingEffect: r.MaskingEffect,
+                        movement:    r.Movement,
+                        distance:    r.Distance,
+                        soundSource: r.SoundSource,
+                        notes:       r.Notes,
+                    }));
+
+                if (!allSounds.length) throw new Error('No sound entries found in the metadata file.');
+
+                populateMetaFilters();
+                filteredSounds = allSounds;
+
+                document.getElementById('metaLoading').style.display = 'none';
+                document.getElementById('metaContent').style.display = 'block';
+                renderMetaPage();
+
+            } catch (err) {
+                document.getElementById('metaLoading').style.display = 'none';
+                const box = document.getElementById('metaErrorBox');
+                box.style.display = 'block';
+                box.innerHTML = `<div class="meta-error-box"><strong>Couldn\u2019t load the sound metadata.</strong><br>${err.message}</div>`;
+                console.error(err);
+            }
+        }
+
+        function populateMetaFilters() {
+            const categories = [...new Set(allSounds.map(s => s.category))].filter(Boolean).sort();
+            const catSelect = document.getElementById('metaCategoryFilter');
+            categories.forEach(cat => {
+                const opt = document.createElement('option');
+                opt.value = opt.textContent = cat;
+                catSelect.appendChild(opt);
+            });
+            refreshSubcategoryOptions();
+        }
+
+        function refreshSubcategoryOptions(selectedCategory) {
+            const subSelect = document.getElementById('metaSubcategoryFilter');
+            const pool = selectedCategory
+                ? allSounds.filter(s => s.category === selectedCategory)
+                : allSounds;
+            const subs = [...new Set(pool.map(s => s.subcategory))].filter(Boolean).sort();
+
+            const prevValue = subSelect.value;
+            subSelect.innerHTML = '<option value="">All subcategories</option>';
+            subs.forEach(sub => {
+                const opt = document.createElement('option');
+                opt.value = opt.textContent = sub;
+                subSelect.appendChild(opt);
+            });
+            if (subs.includes(prevValue)) subSelect.value = prevValue;
+        }
+
+        function applyMetaFilters() {
+            const q   = document.getElementById('metaSearchInput').value.trim().toLowerCase();
+            const cat = document.getElementById('metaCategoryFilter').value;
+            const sub = document.getElementById('metaSubcategoryFilter').value;
+
+            filteredSounds = allSounds.filter(s => {
+                if (cat && s.category !== cat) return false;
+                if (sub && s.subcategory !== sub) return false;
+                if (!q) return true;
+                return (
+                    s.fileName.toLowerCase().includes(q) ||
+                    s.originalName.toLowerCase().includes(q) ||
+                    s.database.toLowerCase().includes(q) ||
+                    (s.notes || '').toLowerCase().includes(q)
+                );
+            });
+
+            metaCurrentPage = 1;
+            renderMetaPage();
+        }
+
+        function resetMetaFilters() {
+            document.getElementById('metaSearchInput').value = '';
+            document.getElementById('metaCategoryFilter').value = '';
+            refreshSubcategoryOptions();
+            document.getElementById('metaSubcategoryFilter').value = '';
+            filteredSounds = allSounds;
+            metaCurrentPage = 1;
+            renderMetaPage();
+        }
+        window.resetMetaFilters = resetMetaFilters;
+
+        document.getElementById('metaSearchInput').addEventListener('input', debounceMeta(applyMetaFilters, 200));
+        document.getElementById('metaCategoryFilter').addEventListener('change', () => {
+            refreshSubcategoryOptions(document.getElementById('metaCategoryFilter').value);
+            applyMetaFilters();
+        });
+        document.getElementById('metaSubcategoryFilter').addEventListener('change', applyMetaFilters);
+
+        function debounceMeta(fn, wait) {
+            let t;
+            return (...args) => { clearTimeout(t); t = setTimeout(() => fn(...args), wait); };
+        }
+
+        function changeMetaPage(delta) {
+            const maxPage = Math.max(1, Math.ceil(filteredSounds.length / META_PAGE_SIZE));
+            metaCurrentPage = Math.min(maxPage, Math.max(1, metaCurrentPage + delta));
+            renderMetaPage();
+        }
+        window.changeMetaPage = changeMetaPage;
+
+        function renderMetaPage() {
+            const total   = allSounds.length;
+            const shown   = filteredSounds.length;
+            const maxPage = Math.max(1, Math.ceil(shown / META_PAGE_SIZE));
+            metaCurrentPage = Math.min(metaCurrentPage, maxPage);
+
+            document.getElementById('metaCountLine').textContent = shown === total
+                ? `Showing all ${total} sounds.`
+                : `Showing ${shown} of ${total} sounds.`;
+
+            const start = (metaCurrentPage - 1) * META_PAGE_SIZE;
+            const pageItems = filteredSounds.slice(start, start + META_PAGE_SIZE);
+
+            const tbody = document.getElementById('metaTableBody');
+            tbody.innerHTML = '';
+
+            pageItems.forEach((s) => {
+                const rowId = `meta-row-${s.lp}`;
+                const tr = document.createElement('tr');
+                tr.id = rowId;
+                if (s.lp === currentlyPlayingLp) tr.classList.add('playing');
+
+                const folder = SUBCATEGORY_TO_FOLDER[s.subcategory];
+                const featuresUrl = folder
+                    ? `features.html?category=${encodeURIComponent(folder)}&sound=${encodeURIComponent(onDiskName(s.fileName))}`
+                    : 'features.html';
+
+                tr.innerHTML = `
+                    <td>
+                        <button class="play-btn" type="button" title="Play" onclick="playMetaSound('${escapeJsMeta(s.lp)}')">
+                            <i class="fa fa-play"></i>
+                        </button>
+                    </td>
+                    <td>${escapeHtmlMeta(s.lp)}</td>
+                    <td>${escapeHtmlMeta(displayName(s.fileName))}</td>
+                    <td><span class="top-cat-tag top-cat-${escapeHtmlMeta(s.category)}">${escapeHtmlMeta(s.category)}</span></td>
+                    <td><span class="sub-cat-tag">${escapeHtmlMeta(s.subcategory)}</span></td>
+                    <td>${escapeHtmlMeta(s.database)}</td>
+                    <td>${escapeHtmlMeta(s.originalName || '—')}</td>
+                    <td>${isFinite(s.duration) ? s.duration.toFixed(2) + ' s' : '—'}</td>
+                    <td>${s.sampleRate ? s.sampleRate + ' Hz' : '—'}</td>
+                    <td>${escapeHtmlMeta(s.totalSamples || '—')}</td>
+                    <td>${escapeHtmlMeta(s.channels || '—')}</td>
+                    <td>${escapeHtmlMeta(s.bitsPerSample || '—')}</td>
+                    <td>${escapeHtmlMeta(TYPE_LABELS[s.type] || s.type || '—')}</td>
+                    <td>${escapeHtmlMeta(s.backgroundNoise || '—')}</td>
+                    <td>${escapeHtmlMeta(s.maskingEffect || '—')}</td>
+                    <td>${escapeHtmlMeta(s.movement || '—')}</td>
+                    <td>${escapeHtmlMeta(s.distance || '—')}</td>
+                    <td>${escapeHtmlMeta(s.soundSource || '—')}</td>
+                    <td>${escapeHtmlMeta(s.notes || '—')}</td>
+                    <td><a class="meta-catalogue-link" href="${featuresUrl}">View features &rarr;</a></td>
+                `;
+                tbody.appendChild(tr);
+            });
+
+            document.getElementById('metaPageLabel').textContent = `Page ${metaCurrentPage} of ${maxPage}`;
+            document.getElementById('metaPrevPageBtn').disabled = metaCurrentPage <= 1;
+            document.getElementById('metaNextPageBtn').disabled = metaCurrentPage >= maxPage;
+
+            if (currentlyPlayingLp) highlightMetaPlayButton(currentlyPlayingLp, true);
+        }
+
+        // ── Playback ─────────────────────────────────────────────────────────
+
+        function playMetaSound(lp) {
+            const player = document.getElementById('metaAudioPlayer');
+
+            // Clicking the button for the row that's already loaded toggles play/pause
+            if (currentlyPlayingLp === lp) {
+                if (player.paused) {
+                    player.play().catch(err => console.warn('Playback failed:', err));
+                } else {
+                    player.pause();
+                }
+                return;
+            }
+
+            const sound = allSounds.find(s => s.lp === lp);
+            if (!sound) return;
+
+            const folder = SUBCATEGORY_TO_FOLDER[sound.subcategory];
+            if (!folder) {
+                console.warn('No known folder for subcategory:', sound.subcategory);
+                return;
+            }
+
+            const diskName = onDiskName(sound.fileName);
+            const wavUrl = `${RAW_BASE}/audio_files/${folder}/${diskName}.wav`;
+
+            if (currentlyPlayingLp) highlightMetaPlayButton(currentlyPlayingLp, false);
+            currentlyPlayingLp = lp;
+
+            player.src = wavUrl;
+            player.play().catch(err => console.warn('Playback failed:', err));
+
+            document.getElementById('metaNowPlayingLabel').innerHTML =
+                `<span class="sub-cat-tag" style="background:#BDD7CD;">${escapeHtmlMeta(sound.subcategory)}</span> &nbsp;${escapeHtmlMeta(sound.fileName)}`;
+            document.getElementById('metaPlayerBar').classList.add('active');
+        }
+        window.playMetaSound = playMetaSound;
+
+        // Keep the row's button in sync with the actual player state, whether
+        // playback was started/stopped from the row button or the bar's own
+        // native controls. Deferred until DOMContentLoaded because the
+        // <audio> element is further down the page than this <script> block.
+        document.addEventListener('DOMContentLoaded', function () {
+            const player = document.getElementById('metaAudioPlayer');
+            if (!player) return;
+            player.addEventListener('play',  () => { if (currentlyPlayingLp) highlightMetaPlayButton(currentlyPlayingLp, true); });
+            player.addEventListener('pause', () => { if (currentlyPlayingLp) highlightMetaPlayButton(currentlyPlayingLp, false); });
+            player.addEventListener('ended', () => { if (currentlyPlayingLp) highlightMetaPlayButton(currentlyPlayingLp, false); });
+        });
+
+        function highlightMetaPlayButton(lp, isPlaying) {
+            const row = document.getElementById(`meta-row-${lp}`);
+            if (!row) return;
+            row.classList.toggle('playing', isPlaying);
+            const btn = row.querySelector('.play-btn');
+            if (btn) {
+                btn.classList.toggle('is-playing', isPlaying);
+                btn.innerHTML = isPlaying ? '<i class="fa fa-pause"></i>' : '<i class="fa fa-play"></i>';
+            }
+        }
+
+        function closeMetaPlayer(event) {
+            if (event) { event.preventDefault(); event.stopPropagation(); }
+            const player = document.getElementById('metaAudioPlayer');
+            player.pause();
+            document.getElementById('metaPlayerBar').classList.remove('active');
+            if (currentlyPlayingLp) highlightMetaPlayButton(currentlyPlayingLp, false);
+            currentlyPlayingLp = null;
+        }
+        window.closeMetaPlayer = closeMetaPlayer;
+
+        function escapeJsMeta(str) { return String(str).replace(/'/g, "\\'"); }
+
+        function escapeHtmlMeta(str) {
+            return String(str).replace(/[&<>"']/g, c => ({
+                '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;',
+            }[c]));
+        }
+
+        loadMetadata();
+    })();
+</script>
+
+</div>
+
+<div class="pageitem">
+	<h2><a id="acoustics">Acoustics</a></h2>
+<h3>
+<p>Selection of the acoustic features was inspired by previous research in audio content analysis (Lerch, 2012), with emphasis on the applications in environmental sound recognition and classification (e.g., Keller & Berger, 2001; Peltonen et al., 2002; Cai et al., 2006; Muhammad & Alghatabar, 2009; Leaver & Rauschecker, 2010; Velero & Alias, 2010; for review see: Alias, Socoro, & Sevillano, 2016; Serizel, Bisot, Essid, & Richard, 2017). We included features which were shown to perform well in describing and parameterising environmental sounds. The list of selected features is not exhaustive, but based on the usefulness of those features in previous research it should provide a good starting point for considering variability in the acoustic structure of environmental sounds.</p>
+
+
+<a href="https://download-directory.github.io/?url=https://github.com/mkachlicka/envisounds_dataset/tree/main/data/features" target="_blank"><button type="submit"><i class="fa fa-download"></i> Acoustic Features Download</button></a>
+
+<p>To see the full list of acoustic features and read about functions used for extraction, see below.</p>
+
+<span id="dots-acoustics"></span><span id="more-acoustics">
+
+<p>Each sound file in EnviSounds was analysed with <a href="https://librosa.org/doc/main/index.html" target="_blank" rel="noopener">librosa&nbsp;0.11</a>. Features can be grouped into four categories: time-domain, spectral, cepstral, and quality. The extracted features are stored as JSON files and a separate CSV summarises each feature with descriptive statistics per sound file.</p>
+
+<p>Time-domain features
+<ul>
+	<!--<li><em>Amplitude envelope</em></li>-->
+	<li>RMS energy &mdash; root-mean-square energy per frame, computed with <a href="https://librosa.org/doc/main/generated/librosa.feature.rms.html" target="_blank" rel="noopener"><code>librosa.feature.rms</code></a>. RMS energy is proportional to the perceived loudness of a frame and is a standard measure of signal power over time.</li><br>
+
+	<li>Zero-crossing rate (ZCR) &mdash; a rate at which the signal changes from positve to negative is computed with <a href="https://librosa.org/doc/main/generated/librosa.feature.zero_crossing_rate.html" target="_blank" rel="noopener"><code>librosa.feature.zero_crossing_rate</code></a>. High ZCR indicates rapid sign changes typical of noise-like or percussive content, while low ZCR reflects tonal, slowly oscillating waveforms.</li><br>
+
+	<li>Temporal centroid &mdash; indicates where in time most of the signal's energy occurs. A low value indicates an impulsive sound (most energy at the onset), while higher values indicate more sustained sounds. This feature can be useful for distinguishing a single clap from continuous applause, for instance.</li>
+</ul>
+</p>
+
+<p>Spectral features
+<ul>
+	<li>Spectral centroid &mdash; describes the centre of gravity of the spectral energy of sound (i.e., its dominant frequency), computed with <a href="https://librosa.org/doc/main/generated/librosa.feature.spectral_centroid.html" target="_blank" rel="noopener"><code>librosa.feature.spectral_centroid</code></a>. A high centroid reflects a bright, high-frequency dominated sound (e.g. birdsong, squealing tyres), while a low centroid reflects more dull or bass-heavy sounds (e.g. thunder, engine).</li><br>
+
+	<li>Spectral rolloff &mdash; the frequency below which 85&thinsp;% of the total spectral energy is contained, computed with <a href="https://librosa.org/doc/main/generated/librosa.feature.spectral_rolloff.html" target="_blank" rel="noopener"><code>librosa.feature.spectral_rolloff</code></a>(<code>roll_percent=0.85</code>). Rolloff captures the upper frequency extent of a sound and helps separate broadband noise (high rolloff) from low-frequency sources such as distant thunder (low rolloff).</li><br>
+
+	<li>Spectral bandwidth &mdash; the weighted standard deviation of frequencies around the spectral centroid, computed with <a href="https://librosa.org/doc/main/generated/librosa.feature.spectral_bandwidth.html" target="_blank" rel="noopener"><code>librosa.feature.spectral_bandwidth</code></a>. Broad bandwidth is characteristic of noise-like sounds (rain, wind) while narrow bandwidth indicates tonal content (whistling, bird calls, car horns).</li><br>
+
+	<li>Spectral flatness &mdash; measures uniformity in the frequency distribution of the power spectrum and is calculated as the ratio of the geometric mean to the arithmetic mean of the power spectrum per frame, computed with <a href="https://librosa.org/doc/main/generated/librosa.feature.spectral_flatness.html" target="_blank" rel="noopener"><code>librosa.feature.spectral_flatness</code></a>. Values near 1 indicate a white-noise-like, uniformly distributed spectrum; values near 0 indicate a peaked, tonal spectrum. This is a key discriminator between texture-type sounds (rain, wind, running water) and tonal sources (birdsong, horns, bells).</li><br>
+
+	<li>Spectral contrast &mdash; The difference in spectral energy between peaks and valleys in seven sub-bands, computed with <a href="https://librosa.org/doc/main/generated/librosa.feature.spectral_contrast.html" target="_blank" rel="noopener"><code>librosa.feature.spectral_contrast</code></a>(default parameters; 7 bands × frames). High contrast in the low bands indicates strong harmonic structure with clear valleys between harmonics; low contrast indicates a more noise-like spectrum. The feature captures aspects of timbre related to harmonic richness across the frequency range.</li><br>
+
+	<li>Spectral flux &mdash; is defined as the sum of squared frame-to-frame differences in spectral magnitude and describes sudden changes in the frequency distributions of sounds (i.e. its dynamic variation). High spectral flux indicates rapidly changing spectral content, as found in percussive or transient sounds (footsteps, hammering, thunder). Low flux is characteristic of steady textures (engine drone, rain, running water). </li><br>
+
+	<li>Spectral kurtosis &mdash; describes the flatness of the spectral distribution around its mean. High kurtosis indicates a strongly peaked spectrum (tonal or impulsive content), while low kurtosis indicates a flatter, more uniform spectral distribution. Unlike spectral flatness, which measures overall uniformity, spectral kurtosis is sensitive to the presence of sharp spectral peaks.</li><br>
+
+	<li>Mel spectrogram &mdash; the STFT power spectrum mapped onto 128 mel-scale frequency bands using <a href="https://librosa.org/doc/main/generated/librosa.feature.melspectrogram.html" target="_blank" rel="noopener"><code>librosa.feature.melspectrogram</code></a>, then converted to dB with <a href="https://librosa.org/doc/main/generated/librosa.power_to_db.html" target="_blank" rel="noopener"><code>librosa.power_to_db</code></a>.</li><br>
+
+	<li>Mean power spectrum &mdash; the dB-magnitude spectrogram averaged across all frames.</li><br>
+
+	<li>Log-Mel band energies &mdash; a coarser version of the mel spectrogram using only 8 broad mel bands, computed with <a href="https://librosa.org/doc/main/generated/librosa.feature.melspectrogram.html" target="_blank" rel="noopener"><code>librosa.feature.melspectrogram</code></a> (<code>n_mels=8</code>) followed by <a href="https://librosa.org/doc/main/generated/librosa.power_to_db.html" target="_blank" rel="noopener"><code>librosa.power_to_db</code></a>. The 8 bands provide an interpretable, low-dimensional frequency-band summary suitable for direct comparison across sound categories, e.g. low-band energy is high for thunder and engine sounds, while high-band energy is high for birdsong and squealing tyres.</li>
+</ul>
+</p>
+
+<p>Cepstral features
+<ul>
+	<li>MFCCs (Mel-Frequency Cepstral Coefficients) &mdash; the first 13 cepstral coefficients derived from the log mel spectrogram, computed with <a href="https://librosa.org/doc/main/generated/librosa.feature.mfcc.html" target="_blank" rel="noopener"><code>librosa.feature.mfcc</code></a>. MFCCs are the most widely used timbre descriptor in environmental sound recognition. The lower coefficients capture the broad spectral shape (related to vocal-tract or source colour), while higher coefficients capture finer spectral detail.</li><br>
+
+	<li>MFCC Deltas &mdash; First-order temporal derivatives of the MFCC trajectories, computed with <a href="https://librosa.org/doc/main/generated/librosa.feature.delta.html" target="_blank" rel="noopener"><code>librosa.feature.delta</code></a> using a 9-frame window. Delta coefficients encode <em>how fast</em> the spectral shape is changing from frame to frame, capturing the temporal dynamics of a sound's texture. They complement the static MFCCs and are especially informative for distinguishing periodic textures (sawing, galloping) from stochastic ones (rain, wind).</li>
+</ul>
+</p>
+
+<p>Quality features
+<ul>
+	<li>Harmonic-to-Noise Ratio (HNR) &mdash; per-frame ratio of harmonic energy to residual noise energy, estimated via harmonic/percussive source separation. First, we decomposed the signal with <a href="https://librosa.org/doc/main/generated/librosa.effects.hpss.html" target="_blank" rel="noopener"><code>librosa.effects.hpss</code></a>, and then computed RMS energy for both components. High positive HNR values indicate strongly tonal sources (birdsong, bells); values near 0 or negative indicate noise-dominated texture-like sounds (wind, rain, crowd noise).</li>
+</ul>
+</p>
+
+</span>
+
+<button onclick="toggleSection('acoustics')" id="myBtn-acoustics">Read more</button>
+
+</h3>
+</div>
+
+<div class="pageitem">
+	<h2><a id="semantics">Semantics</a></h2>
+<h3>
+<p>COMING SOON!</p>
+</h3>
+</div>
+
+
+<div class="pageitem">
+	<h2><a id="norms">Norms</a></h2>
+<h3>
+<p>Recognition, imageability and representativeness norms were collected for each sound. Recognition time indexes how quickly listeners could identify a sound, imageability captures how easily a sound evokes a mental image, and representativeness indexes how typical the sound is judged to be of its category.</p>
+
+<p>Trial-level norms data displayed below includes: participant ID (anonymized), sound, category, main category, recognition time (ms), imageability (1&ndash;7), representativeness (1&ndash;10), and recognition scoring (2 &ndash; when both source and action were correct; 1 &ndash; when either source or action was correct; 0 &ndash; when neither source nor action was correct).</p>
+
+<a href="https://raw.githubusercontent.com/mkachlicka/envisounds_dataset/main/data/data_norms_anonymized.csv" download><button type="submit"><i class="fa fa-download"></i> Download Norms Data</button></a>
+</h3>
+
+<div id="nmLoading">Loading norms data from GitHub&hellip;</div>
+<div id="nmErrorBox" style="display:none;"></div>
+
+<div id="nmContent" style="display:none;">
+
+    <div class="meta-controls">
+        <div class="meta-control-row">
+            <label for="nmSearchInput"><i class="fa fa-search"></i> Search:</label>
+            <input type="text" id="nmSearchInput" placeholder="Filter by sound or participant&hellip;">
+            <label for="nmMainCategoryFilter">Main category:</label>
+            <select id="nmMainCategoryFilter">
+                <option value="">All main categories</option>
+            </select>
+            <label for="nmCategoryFilter">Category:</label>
+            <select id="nmCategoryFilter">
+                <option value="">All categories</option>
+            </select>
+            <button onclick="nmResetFilters()">Reset</button>
+        </div>
+        <p class="meta-count-line" id="nmCountLine"></p>
+    </div>
+
+    <div class="meta-table-wrap">
+        <table class="meta-table">
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>Participant ID</th>
+                    <th>Sound</th>
+                    <th>Main category</th>
+                    <th>Category</th>
+                    <th>Recognition (ms)</th>
+                    <th>Imageability</th>
+                    <th>Representativeness</th>
+                    <th>Scoring</th>
+                    <th>Duration (s)</th>
+                    <th>Samples</th>
+                    <th>Duration (ms)</th>
+                    <th>Duration &minus; Recognition (ms)</th>
+                </tr>
+            </thead>
+            <tbody id="nmTableBody"></tbody>
+        </table>
+        <div class="meta-pagination" id="nmShowMoreRow">
+            <button id="nmShowMoreBtn" onclick="nmShowMore()">Show more &darr;</button>
+        </div>
+        <div class="meta-pagination" id="nmPaginationRow" style="display:none;">
+            <button id="nmPrevPageBtn" onclick="nmChangePage(-1)">&larr; Prev</button>
+            <span id="nmPageLabel"></span>
+            <button id="nmNextPageBtn" onclick="nmChangePage(1)">Next &rarr;</button>
+        </div>
+    </div>
+
+</div>
+
+<h3>
+<p style="margin-top:20px;">Goodness-of-exemplar ratings index how typical each sound is of its label (e.g., how "birdsong-like" a given birdsong recording sounds), while similarity ratings capture how alike pairs of sounds within the same category are judged to be. Both measures were collected from listeners at the trial level and are also provided as averaged ratings below.</p>
+
+<p>Downloads:
+<ul>
+	<li>Trial-level goodness ratings, one row per participant per sound (~10,600 rows): rater ID, sound category, exemplar number, goodness rating (1&ndash;10), and response time. <a href="https://raw.githubusercontent.com/mkachlicka/envisounds_dataset/main/data/goodness_data.csv" download><button type="submit"><i class="fa fa-download"></i> Download Goodness Data (raw)</button></a></li><br>
+
+	<li>Mean goodness rating per sound, averaged across all participants (530 rows): sound category, exemplar number, and mean rating. <a href="https://raw.githubusercontent.com/mkachlicka/envisounds_dataset/main/data/goodness_data_averaged.csv" download><button type="submit"><i class="fa fa-download"></i> Download Goodness Data (averaged)</button></a></li><br>
+
+	<li>Trial-level similarity ratings, one row per participant per sound pair (~53,000 rows): rater ID, sound category, both exemplar numbers, similarity rating (1&ndash;8), and response time. <a href="https://raw.githubusercontent.com/mkachlicka/envisounds_dataset/main/data/similarity_data.csv" download><button type="submit"><i class="fa fa-download"></i> Download Similarity Data (raw)</button></a></li><br>
+
+	<li>Mean similarity rating per sound pair, averaged across all participants (5,300 rows): sound category, both exemplar numbers, and mean rating. <a href="https://raw.githubusercontent.com/mkachlicka/envisounds_dataset/main/data/similarity_data_averaged.csv" download><button type="submit"><i class="fa fa-download"></i> Download Similarity Data (averaged)</button></a></li>
+</ul>
+</p>
+</h3>
+
+<span id="dots-norms"></span><span id="more-norms">
+<div id="gsLoading">Loading goodness &amp; similarity data from GitHub&hellip;</div>
+<div id="gsErrorBox" style="display:none;"></div>
+
+<div id="gsContent" style="display:none;">
+
+    <h3 style="margin-top:30px;">Goodness ratings</h3>
+
+    <div class="meta-controls">
+        <div class="meta-control-row">
+            <label for="gsGoodnessSearchInput"><i class="fa fa-search"></i> Search:</label>
+            <input type="text" id="gsGoodnessSearchInput" placeholder="Filter by sound&hellip;">
+            <label for="gsGoodnessCategoryFilter">Category:</label>
+            <select id="gsGoodnessCategoryFilter">
+                <option value="">All categories</option>
+            </select>
+            <label for="gsGoodnessSubcategoryFilter">Subcategory:</label>
+            <select id="gsGoodnessSubcategoryFilter">
+                <option value="">All subcategories</option>
+            </select>
+            <button onclick="gsResetFilters('goodness')">Reset</button>
+        </div>
+        <p class="meta-count-line" id="gsGoodnessCountLine"></p>
+    </div>
+
+    <div class="meta-table-wrap">
+        <table class="meta-table">
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>Sound</th>
+                    <th>Category</th>
+                    <th>Subcategory</th>
+                    <th>Goodness rating</th>
+                </tr>
+            </thead>
+            <tbody id="gsGoodnessTableBody"></tbody>
+        </table>
+        <div class="meta-pagination" id="gsGoodnessShowMoreRow">
+            <button id="gsGoodnessShowMoreBtn" onclick="gsShowMore('goodness')">Show more &darr;</button>
+        </div>
+        <div class="meta-pagination" id="gsGoodnessPaginationRow" style="display:none;">
+            <button id="gsGoodnessPrevPageBtn" onclick="gsChangePage('goodness', -1)">&larr; Prev</button>
+            <span id="gsGoodnessPageLabel"></span>
+            <button id="gsGoodnessNextPageBtn" onclick="gsChangePage('goodness', 1)">Next &rarr;</button>
+        </div>
+    </div>
+
+    <h3 style="margin-top:30px;">Similarity ratings</h3>
+
+    <div class="meta-controls">
+        <div class="meta-control-row">
+            <label for="gsSimilaritySearchInput"><i class="fa fa-search"></i> Search:</label>
+            <input type="text" id="gsSimilaritySearchInput" placeholder="Filter by sound&hellip;">
+            <label for="gsSimilarityCategoryFilter">Category:</label>
+            <select id="gsSimilarityCategoryFilter">
+                <option value="">All categories</option>
+            </select>
+            <label for="gsSimilaritySubcategoryFilter">Subcategory:</label>
+            <select id="gsSimilaritySubcategoryFilter">
+                <option value="">All subcategories</option>
+            </select>
+            <button onclick="gsResetFilters('similarity')">Reset</button>
+        </div>
+        <p class="meta-count-line" id="gsSimilarityCountLine"></p>
+    </div>
+
+    <div class="meta-table-wrap">
+        <table class="meta-table">
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>Category</th>
+                    <th>Subcategory</th>
+                    <th>Sound 1</th>
+                    <th>Sound 2</th>
+                    <th>Similarity rating</th>
+                </tr>
+            </thead>
+            <tbody id="gsSimilarityTableBody"></tbody>
+        </table>
+        <div class="meta-pagination" id="gsSimilarityShowMoreRow">
+            <button id="gsSimilarityShowMoreBtn" onclick="gsShowMore('similarity')">Show more &darr;</button>
+        </div>
+        <div class="meta-pagination" id="gsSimilarityPaginationRow" style="display:none;">
+            <button id="gsSimilarityPrevPageBtn" onclick="gsChangePage('similarity', -1)">&larr; Prev</button>
+            <span id="gsSimilarityPageLabel"></span>
+            <button id="gsSimilarityNextPageBtn" onclick="gsChangePage('similarity', 1)">Next &rarr;</button>
+        </div>
+    </div>
+
+</div>
+
+</span>
+
+<button onclick="toggleSection('norms')" id="myBtn-norms">Read more</button>
+
+<script>
+    (function () {
+        const GS_USER   = 'mkachlicka';
+        const GS_REPO   = 'envisounds_dataset';
+        const GS_BRANCH = 'main';
+        const GS_META_CSV_URL       = `https://raw.githubusercontent.com/${GS_USER}/${GS_REPO}/${GS_BRANCH}/audio_files/envisounds_metadata.csv`;
+        const GS_GOODNESS_CSV_URL   = `https://raw.githubusercontent.com/${GS_USER}/${GS_REPO}/${GS_BRANCH}/data/goodness_data_averaged.csv`;
+        const GS_SIMILARITY_CSV_URL = `https://raw.githubusercontent.com/${GS_USER}/${GS_REPO}/${GS_BRANCH}/data/similarity_data_averaged.csv`;
+
+        const GS_INITIAL_SIZE  = 20;
+        const GS_EXPANDED_SIZE = 40; // shown after one "Show more" click; also the page size once paginated
+
+        // mode: 'compact' (first GS_INITIAL_SIZE rows, "Show more" button) or
+        // 'paginated' (GS_EXPANDED_SIZE rows per page, Prev/Next controls).
+        let gsGoodnessAll = [], gsGoodnessFiltered = [];
+        let gsGoodnessMode = 'compact', gsGoodnessPage = 1;
+
+        let gsSimilarityAll = [], gsSimilarityFiltered = [];
+        let gsSimilarityMode = 'compact', gsSimilarityPage = 1;
+
+        function gsStripQuotes(str) {
+            return String(str || '').replace(/^'+|'+$/g, '').trim();
+        }
+
+        // The goodness/similarity CSVs use slightly different spellings for
+        // two sound labels than the main metadata file. This maps the
+        // ratings-file spelling to the metadata spelling so the join below
+        // resolves correctly.
+        const GS_LABEL_ALIASES = {
+            'InsectsBuzzing': 'InsectBuzzing',
+            'TrainBrakes': 'TrainBreaks',
+        };
+        function gsMetaLabel(category) {
+            return GS_LABEL_ALIASES[category] || category;
+        }
+
+        // Builds a lookup from "<Category>_<NN>_MONO" (matching the goodness/
+        // similarity CSVs' category+sound1 fields) to the sound's top-level
+        // Category (Nature/Human/Manmade) and Subcategory, as given in the
+        // main metadata file.
+        function gsBuildMetaLookup(metaText) {
+            const rows = d3.csvParse(metaText);
+            const lookup = new Map();
+            rows.forEach(r => {
+                if (!r.FileName) return;
+                const fileKey = gsStripQuotes(r.FileName).replace(/\.wav$/i, '');
+                lookup.set(fileKey, { category: r.Category, subcategory: r.Subcategory });
+            });
+            return lookup;
+        }
+
+        async function gsLoadAll() {
+            try {
+                const [metaText, goodnessText, similarityText] = await Promise.all([
+                    fetch(GS_META_CSV_URL).then(r => { if (!r.ok) throw new Error(`Metadata request failed (${r.status}).`); return r.text(); }),
+                    fetch(GS_GOODNESS_CSV_URL).then(r => { if (!r.ok) throw new Error(`Goodness data request failed (${r.status}).`); return r.text(); }),
+                    fetch(GS_SIMILARITY_CSV_URL).then(r => { if (!r.ok) throw new Error(`Similarity data request failed (${r.status}).`); return r.text(); }),
+                ]);
+
+                const metaLookup = gsBuildMetaLookup(metaText);
+
+                gsGoodnessAll = d3.csvParse(goodnessText)
+                    .filter(r => r.category && r.sound1)
+                    .map(r => {
+                        const info = metaLookup.get(`${gsMetaLabel(r.category)}_${r.sound1}_MONO`) || {};
+                        return {
+                            sound: `${r.category}_${r.sound1}`,
+                            category: info.category || '—',
+                            subcategory: info.subcategory || '—',
+                            response: parseFloat(r.response),
+                        };
+                    });
+
+                gsSimilarityAll = d3.csvParse(similarityText)
+                    .filter(r => r.category && r.sound1 && r.sound2)
+                    .map(r => {
+                        const info = metaLookup.get(`${gsMetaLabel(r.category)}_${r.sound1}_MONO`) || {};
+                        return {
+                            category: info.category || '—',
+                            subcategory: info.subcategory || '—',
+                            sound1: `${r.category}_${r.sound1}`,
+                            sound2: `${r.category}_${r.sound2}`,
+                            response: parseFloat(r.response),
+                        };
+                    });
+
+                if (!gsGoodnessAll.length) throw new Error('No goodness entries found.');
+                if (!gsSimilarityAll.length) throw new Error('No similarity entries found.');
+
+                gsPopulateFilters('goodness', gsGoodnessAll);
+                gsPopulateFilters('similarity', gsSimilarityAll);
+                gsGoodnessFiltered = gsGoodnessAll;
+                gsSimilarityFiltered = gsSimilarityAll;
+
+                document.getElementById('gsLoading').style.display = 'none';
+                document.getElementById('gsContent').style.display = 'block';
+                gsRenderPage('goodness');
+                gsRenderPage('similarity');
+
+            } catch (err) {
+                document.getElementById('gsLoading').style.display = 'none';
+                const box = document.getElementById('gsErrorBox');
+                box.style.display = 'block';
+                box.innerHTML = `<div class="meta-error-box"><strong>Couldn\u2019t load the goodness/similarity data.</strong><br>${err.message}</div>`;
+                console.error(err);
+            }
+        }
+
+        function gsPopulateFilters(kind, data) {
+            const categories = [...new Set(data.map(d => d.category))].filter(Boolean).sort();
+            const catSelect = document.getElementById(`gs${gsCap(kind)}CategoryFilter`);
+            catSelect.innerHTML = '<option value="">All categories</option>';
+            categories.forEach(cat => {
+                const opt = document.createElement('option');
+                opt.value = opt.textContent = cat;
+                catSelect.appendChild(opt);
+            });
+            gsRefreshSubcategoryOptions(kind, data);
+        }
+
+        function gsRefreshSubcategoryOptions(kind, data, selectedCategory) {
+            const subSelect = document.getElementById(`gs${gsCap(kind)}SubcategoryFilter`);
+            const pool = selectedCategory ? data.filter(d => d.category === selectedCategory) : data;
+            const subs = [...new Set(pool.map(d => d.subcategory))].filter(Boolean).sort();
+
+            const prevValue = subSelect.value;
+            subSelect.innerHTML = '<option value="">All subcategories</option>';
+            subs.forEach(sub => {
+                const opt = document.createElement('option');
+                opt.value = opt.textContent = sub;
+                subSelect.appendChild(opt);
+            });
+            if (subs.includes(prevValue)) subSelect.value = prevValue;
+        }
+
+        function gsCap(kind) { return kind.charAt(0).toUpperCase() + kind.slice(1); }
+
+        function gsApplyFilters(kind) {
+            const all  = kind === 'goodness' ? gsGoodnessAll : gsSimilarityAll;
+            const q    = document.getElementById(`gs${gsCap(kind)}SearchInput`).value.trim().toLowerCase();
+            const cat  = document.getElementById(`gs${gsCap(kind)}CategoryFilter`).value;
+            const sub  = document.getElementById(`gs${gsCap(kind)}SubcategoryFilter`).value;
+
+            const filtered = all.filter(d => {
+                if (cat && d.category !== cat) return false;
+                if (sub && d.subcategory !== sub) return false;
+                if (!q) return true;
+                if (kind === 'goodness') return d.sound.toLowerCase().includes(q);
+                return d.sound1.toLowerCase().includes(q) || d.sound2.toLowerCase().includes(q);
+            });
+
+            if (kind === 'goodness') { gsGoodnessFiltered = filtered; gsGoodnessMode = 'compact'; gsGoodnessPage = 1; }
+            else { gsSimilarityFiltered = filtered; gsSimilarityMode = 'compact'; gsSimilarityPage = 1; }
+
+            gsRenderPage(kind);
+        }
+
+        function gsResetFilters(kind) {
+            document.getElementById(`gs${gsCap(kind)}SearchInput`).value = '';
+            document.getElementById(`gs${gsCap(kind)}CategoryFilter`).value = '';
+            const all = kind === 'goodness' ? gsGoodnessAll : gsSimilarityAll;
+            gsRefreshSubcategoryOptions(kind, all);
+            document.getElementById(`gs${gsCap(kind)}SubcategoryFilter`).value = '';
+            if (kind === 'goodness') { gsGoodnessFiltered = gsGoodnessAll; gsGoodnessMode = 'compact'; gsGoodnessPage = 1; }
+            else { gsSimilarityFiltered = gsSimilarityAll; gsSimilarityMode = 'compact'; gsSimilarityPage = 1; }
+            gsRenderPage(kind);
+        }
+        window.gsResetFilters = gsResetFilters;
+
+        function gsDebounce(fn, wait) {
+            let t;
+            return (...args) => { clearTimeout(t); t = setTimeout(() => fn(...args), wait); };
+        }
+
+        document.getElementById('gsGoodnessSearchInput').addEventListener('input', gsDebounce(() => gsApplyFilters('goodness'), 200));
+        document.getElementById('gsGoodnessCategoryFilter').addEventListener('change', () => {
+            gsRefreshSubcategoryOptions('goodness', gsGoodnessAll, document.getElementById('gsGoodnessCategoryFilter').value);
+            gsApplyFilters('goodness');
+        });
+        document.getElementById('gsGoodnessSubcategoryFilter').addEventListener('change', () => gsApplyFilters('goodness'));
+
+        document.getElementById('gsSimilaritySearchInput').addEventListener('input', gsDebounce(() => gsApplyFilters('similarity'), 200));
+        document.getElementById('gsSimilarityCategoryFilter').addEventListener('change', () => {
+            gsRefreshSubcategoryOptions('similarity', gsSimilarityAll, document.getElementById('gsSimilarityCategoryFilter').value);
+            gsApplyFilters('similarity');
+        });
+        document.getElementById('gsSimilaritySubcategoryFilter').addEventListener('change', () => gsApplyFilters('similarity'));
+
+        // "Show more" only ever fires once per filter state: it doubles the
+        // initial view to GS_EXPANDED_SIZE rows and switches the table into
+        // paginated mode (Prev/Next, GS_EXPANDED_SIZE rows per page).
+        function gsShowMore(kind) {
+            if (kind === 'goodness') { gsGoodnessMode = 'paginated'; gsGoodnessPage = 1; }
+            else { gsSimilarityMode = 'paginated'; gsSimilarityPage = 1; }
+            gsRenderPage(kind);
+        }
+        window.gsShowMore = gsShowMore;
+
+        function gsChangePage(kind, delta) {
+            const filtered = kind === 'goodness' ? gsGoodnessFiltered : gsSimilarityFiltered;
+            const maxPage = Math.max(1, Math.ceil(filtered.length / GS_EXPANDED_SIZE));
+            if (kind === 'goodness') gsGoodnessPage = Math.min(maxPage, Math.max(1, gsGoodnessPage + delta));
+            else gsSimilarityPage = Math.min(maxPage, Math.max(1, gsSimilarityPage + delta));
+            gsRenderPage(kind);
+        }
+        window.gsChangePage = gsChangePage;
+
+        function gsRenderPage(kind) {
+            const all      = kind === 'goodness' ? gsGoodnessAll : gsSimilarityAll;
+            const filtered = kind === 'goodness' ? gsGoodnessFiltered : gsSimilarityFiltered;
+            const total    = all.length;
+            const shown    = filtered.length;
+            const mode     = kind === 'goodness' ? gsGoodnessMode : gsSimilarityMode;
+
+            let start, pageItems, maxPage, page;
+
+            if (mode === 'compact') {
+                start = 0;
+                pageItems = filtered.slice(0, GS_INITIAL_SIZE);
+            } else {
+                maxPage = Math.max(1, Math.ceil(shown / GS_EXPANDED_SIZE));
+                page = Math.min(kind === 'goodness' ? gsGoodnessPage : gsSimilarityPage, maxPage);
+                if (kind === 'goodness') gsGoodnessPage = page; else gsSimilarityPage = page;
+                start = (page - 1) * GS_EXPANDED_SIZE;
+                pageItems = filtered.slice(start, start + GS_EXPANDED_SIZE);
+            }
+
+            document.getElementById(`gs${gsCap(kind)}CountLine`).textContent = shown === total
+                ? (mode === 'compact'
+                    ? `Showing ${pageItems.length} of ${total} ${kind === 'goodness' ? 'sounds' : 'sound pairs'}.`
+                    : `Showing ${start + 1}\u2013${start + pageItems.length} of ${total} ${kind === 'goodness' ? 'sounds' : 'sound pairs'}.`)
+                : (mode === 'compact'
+                    ? `Showing ${pageItems.length} of ${shown} matching ${kind === 'goodness' ? 'sounds' : 'sound pairs'} (${total} total).`
+                    : `Showing ${start + 1}\u2013${start + pageItems.length} of ${shown} matching ${kind === 'goodness' ? 'sounds' : 'sound pairs'} (${total} total).`);
+
+            const tbody = document.getElementById(`gs${gsCap(kind)}TableBody`);
+            tbody.innerHTML = '';
+            pageItems.forEach((d, i) => tbody.appendChild(gsBuildRow(kind, d, start + i + 1)));
+
+            const showMoreRow    = document.getElementById(`gs${gsCap(kind)}ShowMoreRow`);
+            const paginationRow  = document.getElementById(`gs${gsCap(kind)}PaginationRow`);
+
+            if (mode === 'compact') {
+                paginationRow.style.display = 'none';
+                showMoreRow.style.display = shown > GS_INITIAL_SIZE ? 'flex' : 'none';
+            } else {
+                showMoreRow.style.display = 'none';
+                paginationRow.style.display = 'flex';
+                document.getElementById(`gs${gsCap(kind)}PageLabel`).textContent = `Page ${page} of ${maxPage}`;
+                document.getElementById(`gs${gsCap(kind)}PrevPageBtn`).disabled = page <= 1;
+                document.getElementById(`gs${gsCap(kind)}NextPageBtn`).disabled = page >= maxPage;
+            }
+        }
+
+        function gsBuildRow(kind, d, rowNum) {
+            const tr = document.createElement('tr');
+            if (kind === 'goodness') {
+                tr.innerHTML = `
+                    <td>${rowNum}</td>
+                    <td>${gsEscapeHtml(d.sound)}</td>
+                    <td><span class="top-cat-tag top-cat-${gsEscapeHtml(d.category)}">${gsEscapeHtml(d.category)}</span></td>
+                    <td><span class="sub-cat-tag">${gsEscapeHtml(d.subcategory)}</span></td>
+                    <td>${isFinite(d.response) ? d.response.toFixed(2) : '—'}</td>
+                `;
+            } else {
+                tr.innerHTML = `
+                    <td>${rowNum}</td>
+                    <td><span class="top-cat-tag top-cat-${gsEscapeHtml(d.category)}">${gsEscapeHtml(d.category)}</span></td>
+                    <td><span class="sub-cat-tag">${gsEscapeHtml(d.subcategory)}</span></td>
+                    <td>${gsEscapeHtml(d.sound1)}</td>
+                    <td>${gsEscapeHtml(d.sound2)}</td>
+                    <td>${isFinite(d.response) ? d.response.toFixed(2) : '—'}</td>
+                `;
+            }
+            return tr;
+        }
+
+        function gsEscapeHtml(str) {
+            return String(str).replace(/[&<>"']/g, c => ({
+                '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;',
+            }[c]));
+        }
+
+        gsLoadAll();
+    })();
+</script>
+<script>
+    (function () {
+        const NM_USER   = 'mkachlicka';
+        const NM_REPO   = 'envisounds_dataset';
+        const NM_BRANCH = 'main';
+        const NM_CSV_URL = `https://raw.githubusercontent.com/${NM_USER}/${NM_REPO}/${NM_BRANCH}/data/data_norms_anonymized.csv`;
+
+        const NM_INITIAL_SIZE  = 20;
+        const NM_EXPANDED_SIZE = 40; // shown after one "Show more" click; also the page size once paginated
+
+        // Maps the CSV's main_category values onto the site's existing
+        // top-cat-tag colour classes (top-cat-Nature / -Human / -Manmade).
+        const NM_MAIN_CATEGORY_LABELS = {
+            natural: 'Nature',
+            human: 'Human',
+            mechanical: 'Manmade',
+        };
+
+        let nmAll = [], nmFiltered = [];
+        let nmMode = 'compact', nmPage = 1; // 'compact' (first NM_INITIAL_SIZE rows) or 'paginated'
+
+        function nmCap(str) {
+            return str ? str.charAt(0).toUpperCase() + str.slice(1) : str;
+        }
+
+        async function nmLoadAll() {
+            try {
+                const res = await fetch(NM_CSV_URL);
+                if (!res.ok) throw new Error(`Norms data request failed (${res.status}).`);
+                const text = await res.text();
+
+                nmAll = d3.csvParse(text)
+                    .filter(r => r.sound)
+                    .map(r => ({
+                        id: r.ID,
+                        sound: String(r.sound).replace(/\.wav$/i, '').replace(/_MONO$/i, ''),
+                        mainCategory: NM_MAIN_CATEGORY_LABELS[r.main_category] || r.main_category || '—',
+                        category: nmCap(r.category),
+                        recognition: parseFloat(r.recognition),
+                        imageability: parseFloat(r.imageability),
+                        representativeness: parseFloat(r.representativeness),
+                        scoring: r.SCORING,
+                        durationS: parseFloat(r.duration_s),
+                        samples: r.samples,
+                        durationMs: parseFloat(r.duration_ms),
+                        durationRecognition: parseFloat(r.duration_recognition),
+                    }));
+
+                if (!nmAll.length) throw new Error('No norms entries found.');
+
+                nmPopulateFilters();
+                nmFiltered = nmAll;
+
+                document.getElementById('nmLoading').style.display = 'none';
+                document.getElementById('nmContent').style.display = 'block';
+                nmRenderPage();
+
+            } catch (err) {
+                document.getElementById('nmLoading').style.display = 'none';
+                const box = document.getElementById('nmErrorBox');
+                box.style.display = 'block';
+                box.innerHTML = `<div class="meta-error-box"><strong>Couldn\u2019t load the norms data.</strong><br>${err.message}</div>`;
+                console.error(err);
+            }
+        }
+
+        function nmPopulateFilters() {
+            const mainCats = [...new Set(nmAll.map(d => d.mainCategory))].filter(Boolean).sort();
+            const mainSelect = document.getElementById('nmMainCategoryFilter');
+            mainSelect.innerHTML = '<option value="">All main categories</option>';
+            mainCats.forEach(cat => {
+                const opt = document.createElement('option');
+                opt.value = opt.textContent = cat;
+                mainSelect.appendChild(opt);
+            });
+            nmRefreshCategoryOptions();
+        }
+
+        function nmRefreshCategoryOptions(selectedMainCategory) {
+            const catSelect = document.getElementById('nmCategoryFilter');
+            const pool = selectedMainCategory ? nmAll.filter(d => d.mainCategory === selectedMainCategory) : nmAll;
+            const cats = [...new Set(pool.map(d => d.category))].filter(Boolean).sort();
+
+            const prevValue = catSelect.value;
+            catSelect.innerHTML = '<option value="">All categories</option>';
+            cats.forEach(cat => {
+                const opt = document.createElement('option');
+                opt.value = opt.textContent = cat;
+                catSelect.appendChild(opt);
+            });
+            if (cats.includes(prevValue)) catSelect.value = prevValue;
+        }
+
+        function nmApplyFilters() {
+            const q       = document.getElementById('nmSearchInput').value.trim().toLowerCase();
+            const mainCat = document.getElementById('nmMainCategoryFilter').value;
+            const cat     = document.getElementById('nmCategoryFilter').value;
+
+            nmFiltered = nmAll.filter(d => {
+                if (mainCat && d.mainCategory !== mainCat) return false;
+                if (cat && d.category !== cat) return false;
+                if (!q) return true;
+                return d.sound.toLowerCase().includes(q) || String(d.id).toLowerCase().includes(q);
+            });
+
+            nmMode = 'compact';
+            nmPage = 1;
+            nmRenderPage();
+        }
+
+        function nmResetFilters() {
+            document.getElementById('nmSearchInput').value = '';
+            document.getElementById('nmMainCategoryFilter').value = '';
+            nmRefreshCategoryOptions();
+            document.getElementById('nmCategoryFilter').value = '';
+            nmFiltered = nmAll;
+            nmMode = 'compact';
+            nmPage = 1;
+            nmRenderPage();
+        }
+        window.nmResetFilters = nmResetFilters;
+
+        function nmDebounce(fn, wait) {
+            let t;
+            return (...args) => { clearTimeout(t); t = setTimeout(() => fn(...args), wait); };
+        }
+
+        document.getElementById('nmSearchInput').addEventListener('input', nmDebounce(nmApplyFilters, 200));
+        document.getElementById('nmMainCategoryFilter').addEventListener('change', () => {
+            nmRefreshCategoryOptions(document.getElementById('nmMainCategoryFilter').value);
+            nmApplyFilters();
+        });
+        document.getElementById('nmCategoryFilter').addEventListener('change', nmApplyFilters);
+
+        // "Show more" only ever fires once per filter state: it doubles the
+        // initial view to NM_EXPANDED_SIZE rows and switches the table into
+        // paginated mode (Prev/Next, NM_EXPANDED_SIZE rows per page).
+        function nmShowMore() {
+            nmMode = 'paginated';
+            nmPage = 1;
+            nmRenderPage();
+        }
+        window.nmShowMore = nmShowMore;
+
+        function nmChangePage(delta) {
+            const maxPage = Math.max(1, Math.ceil(nmFiltered.length / NM_EXPANDED_SIZE));
+            nmPage = Math.min(maxPage, Math.max(1, nmPage + delta));
+            nmRenderPage();
+        }
+        window.nmChangePage = nmChangePage;
+
+        function nmRenderPage() {
+            const total = nmAll.length;
+            const shown = nmFiltered.length;
+
+            let start, pageItems, maxPage, page;
+
+            if (nmMode === 'compact') {
+                start = 0;
+                pageItems = nmFiltered.slice(0, NM_INITIAL_SIZE);
+            } else {
+                maxPage = Math.max(1, Math.ceil(shown / NM_EXPANDED_SIZE));
+                page = Math.min(nmPage, maxPage);
+                nmPage = page;
+                start = (page - 1) * NM_EXPANDED_SIZE;
+                pageItems = nmFiltered.slice(start, start + NM_EXPANDED_SIZE);
+            }
+
+            document.getElementById('nmCountLine').textContent = shown === total
+                ? (nmMode === 'compact'
+                    ? `Showing ${pageItems.length} of ${total} trials.`
+                    : `Showing ${start + 1}\u2013${start + pageItems.length} of ${total} trials.`)
+                : (nmMode === 'compact'
+                    ? `Showing ${pageItems.length} of ${shown} matching trials (${total} total).`
+                    : `Showing ${start + 1}\u2013${start + pageItems.length} of ${shown} matching trials (${total} total).`);
+
+            const tbody = document.getElementById('nmTableBody');
+            tbody.innerHTML = '';
+            pageItems.forEach((d, i) => tbody.appendChild(nmBuildRow(d, start + i + 1)));
+
+            const showMoreRow   = document.getElementById('nmShowMoreRow');
+            const paginationRow = document.getElementById('nmPaginationRow');
+
+            if (nmMode === 'compact') {
+                paginationRow.style.display = 'none';
+                showMoreRow.style.display = shown > NM_INITIAL_SIZE ? 'flex' : 'none';
+            } else {
+                showMoreRow.style.display = 'none';
+                paginationRow.style.display = 'flex';
+                document.getElementById('nmPageLabel').textContent = `Page ${page} of ${maxPage}`;
+                document.getElementById('nmPrevPageBtn').disabled = page <= 1;
+                document.getElementById('nmNextPageBtn').disabled = page >= maxPage;
+            }
+        }
+
+        function nmBuildRow(d, rowNum) {
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td>${rowNum}</td>
+                <td>${nmEscapeHtml(d.id)}</td>
+                <td>${nmEscapeHtml(d.sound)}</td>
+                <td><span class="top-cat-tag top-cat-${nmEscapeHtml(d.mainCategory)}">${nmEscapeHtml(d.mainCategory)}</span></td>
+                <td><span class="sub-cat-tag">${nmEscapeHtml(d.category)}</span></td>
+                <td>${isFinite(d.recognition) ? d.recognition.toFixed(2) : '—'}</td>
+                <td>${isFinite(d.imageability) ? d.imageability : '—'}</td>
+                <td>${isFinite(d.representativeness) ? d.representativeness : '—'}</td>
+                <td>${nmEscapeHtml(d.scoring)}</td>
+                <td>${isFinite(d.durationS) ? d.durationS.toFixed(3) : '—'}</td>
+                <td>${nmEscapeHtml(d.samples)}</td>
+                <td>${isFinite(d.durationMs) ? d.durationMs.toFixed(1) : '—'}</td>
+                <td>${isFinite(d.durationRecognition) ? d.durationRecognition.toFixed(2) : '—'}</td>
+            `;
+            return tr;
+        }
+
+        function nmEscapeHtml(str) {
+            return String(str ?? '').replace(/[&<>"']/g, c => ({
+                '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;',
+            }[c]));
+        }
+
+        nmLoadAll();
+    })();
+</script>
+</div>
+
+
+<div class="pageitem">
+	<h2><a id="explore">Explore</a></h2>
+<h3>
+<p>Here you can explore visualisations of various aspects of the dataset. Please select from the list of available visualisations below:
+<ul>
+<li><p><a href="similarities.html">Within-category visualisations →</a></p></li>
+<li><p><a href="features.html">Audio feature visualisations →</a></p></li>
+<li><p><a href="feature_distributions.html">Distributions of features across categories →</h3></p></li>
+</ul>
+
+<!--<iframe
+  src="https://envisoundsvisualisations-audiofile-visualisation.streamlit.app//?embed=true"
+  height="450"
+  width="450">
+  </iframe>
+
+<iframe
+  src="https://envisoundsvisualisations-within-category.streamlit.app/?embed=true"
+  height="450"
+  width="450">
+  </iframe>
+</div>-->
+
+<!--<div class="pageitem">
+	<h2>Talks</h2>
+<h3>	
+<p> 'Auditory processing in second language learning' at Brain & Language Seminar (February 2019), University of Helsinki, Finland </p> <br> <br>
+</h3>
+</div>
+-->
+
+
+
+<!-- footer items go here
+<div class="section">
+<div id="footer">
+-->
+</div>
+</div>
+
+
+<!-- DISCLAIMERS -->
+<div class="section">
+
+<div id="credits">
+    <div class="col"><p>Last modified 2026/08/30</p></div>
+    <div class="col"><p>Designed by MKachlicka</p></div>
+	<div class="col"><p>&#169; 2018-2026 MKachlicka. All rights reserved.</p></div>
+</div>
+</div>
+
+</div> 
+<!-- STICKY AUDIO PLAYER -->
+<div id="metaPlayerBar">
+    <span id="metaNowPlayingLabel">Nothing playing</span>
+    <audio id="metaAudioPlayer" controls></audio>
+    <button id="metaClosePlayer" type="button" onclick="closeMetaPlayer(event)" title="Close player"><i class="fa fa-times"></i></button>
+</div>
+
+</body>
+</html>
