@@ -217,7 +217,7 @@
 <body id="research">
 
 <style>
-#more, #more-intro, #more-acoustics{display: none;}
+#more, #more-intro, #more-acoustics, #more-norms{display: none;}
 </style>
 
 <script>
@@ -326,6 +326,44 @@
 <a href="https://github.com/mkachlicka/envisounds_dataset/archive/refs/heads/main.zip" target="_blank"><button type="submit"><i class="fa fa-download"></i> Download Full Dataset</button></a>
 
 <a href="#sounds"><button type="submit"><i class="fa fa-headphones"></i> Listen to sounds</button></a>
+
+<h3>
+<p style="margin-top:20px;">(3) You can also explore the dataset interactively at the bottom of this page, using: <a href="similarities.html">(1) similarity metrics</a>, <a href="features.html">(2) acoustic features</a>, and <a href="feature_distributions.html">(3) distributions of features</a> across categories. A preview of each is shown below.</p>
+</h3>
+
+<div style="display:grid; grid-template-columns:repeat(3, 1fr); gap:25px; margin-top:15px; width:100%;">
+
+	<div>
+		<div style="display:grid; grid-template-columns:1fr 1fr; gap:4px; border-radius:8px; box-shadow:0 2px 4px rgba(0,0,0,0.1); overflow:hidden;">
+			<img src="images/newplot_1_good.png" alt="Goodness of exemplar preview" style="display:block; width:100%; height:auto; aspect-ratio:1/1; object-fit:cover;">
+			<img src="images/newplot_1_mds3d.png" alt="MDS 3D preview" style="display:block; width:100%; height:auto; aspect-ratio:1/1; object-fit:cover;">
+			<img src="images/newplot_1_mds2s.png" alt="MDS 2D preview" style="display:block; width:100%; height:auto; aspect-ratio:1/1; object-fit:cover;">
+			<img src="images/newplot_1_sim.png" alt="Similarity matrix preview" style="display:block; width:100%; height:auto; aspect-ratio:1/1; object-fit:cover;">
+		</div>
+		<p style="margin:8px 10px; font-size:14px; text-align:center;">1. Similarity metrics</p>
+	</div>
+
+	<div>
+		<div style="display:grid; grid-template-columns:1fr 1fr; gap:4px; border-radius:8px; box-shadow:0 2px 4px rgba(0,0,0,0.1); overflow:hidden;">
+			<img src="images/newplot_2_wav.png" alt="Waveform preview" style="display:block; width:100%; height:auto; aspect-ratio:1/1; object-fit:cover;">
+			<img src="images/newplot_2_spec.png" alt="Spectrogram preview" style="display:block; width:100%; height:auto; aspect-ratio:1/1; object-fit:cover;">
+			<img src="images/newplot_2_amp.png" alt="Amplitude preview" style="display:block; width:100%; height:auto; aspect-ratio:1/1; object-fit:cover;">
+			<img src="images/newplot_2_hnr.png" alt="HNR preview" style="display:block; width:100%; height:auto; aspect-ratio:1/1; object-fit:cover;">
+		</div>
+		<p style="margin:8px 10px; font-size:14px; text-align:center;">2. Acoustic features</p>
+	</div>
+
+    <div>
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:4px; border-radius:8px; box-shadow:0 2px 4px rgba(0,0,0,0.1); overflow:hidden;">
+            <img src="images/newplot_3_tempc.png" alt="Temporal centroid preview" style="display:block; width:100%; height:auto; aspect-ratio:1/1; object-fit:cover;">
+            <img src="images/newplot_3_loud.png" alt="Loudness preview" style="display:block; width:100%; height:auto; aspect-ratio:1/1; object-fit:cover;">
+            <img src="images/newplot_3_amp.png" alt="Amplitude preview" style="display:block; width:100%; height:auto; aspect-ratio:1/1; object-fit:cover;">
+            <img src="images/newplot_3_rms.png" alt="RMS preview" style="display:block; width:100%; height:auto; aspect-ratio:1/1; object-fit:cover;">
+        </div>
+        <p style="margin:8px 10px; font-size:14px; text-align:center;">3. Distributions of features</p>
+    </div>
+
+</div>
 
 </div>
 
@@ -835,11 +873,691 @@
 <div class="pageitem">
 	<h2><a id="norms">Norms</a></h2>
 <h3>
-<p>COMING SOON!</p>
+<p>Recognition, imageability and representativeness norms were collected for each sound. Recognition time indexes how quickly listeners could identify a sound, imageability captures how easily a sound evokes a mental image, and representativeness indexes how typical the sound is judged to be of its category.</p>
+
+<p>Trial-level norms data (14,045 rows): participant ID, sound, category, main category, recognition time (ms), imageability (1&ndash;7), representativeness (1&ndash;10), recognition scoring, duration, and sample count.</p>
+
+<a href="https://raw.githubusercontent.com/mkachlicka/envisounds_dataset/main/data/data_norms_anonymized.csv" download><button type="submit"><i class="fa fa-download"></i> Download Norms Data</button></a>
 </h3>
 
-<!--<a href="data/placeholder.txt" download=""><button type="submit"><i class="fa fa-download"></i> Norms Download</button></a>-->
+<div id="nmLoading">Loading norms data from GitHub&hellip;</div>
+<div id="nmErrorBox" style="display:none;"></div>
 
+<div id="nmContent" style="display:none;">
+
+    <div class="meta-controls">
+        <div class="meta-control-row">
+            <label for="nmSearchInput"><i class="fa fa-search"></i> Search:</label>
+            <input type="text" id="nmSearchInput" placeholder="Filter by sound or participant&hellip;">
+            <label for="nmMainCategoryFilter">Main category:</label>
+            <select id="nmMainCategoryFilter">
+                <option value="">All main categories</option>
+            </select>
+            <label for="nmCategoryFilter">Category:</label>
+            <select id="nmCategoryFilter">
+                <option value="">All categories</option>
+            </select>
+            <button onclick="nmResetFilters()">Reset</button>
+        </div>
+        <p class="meta-count-line" id="nmCountLine"></p>
+    </div>
+
+    <div class="meta-table-wrap">
+        <table class="meta-table">
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>Participant ID</th>
+                    <th>Sound</th>
+                    <th>Main category</th>
+                    <th>Category</th>
+                    <th>Recognition (ms)</th>
+                    <th>Imageability</th>
+                    <th>Representativeness</th>
+                    <th>Scoring</th>
+                    <th>Duration (s)</th>
+                    <th>Samples</th>
+                    <th>Duration (ms)</th>
+                    <th>Duration &minus; Recognition (ms)</th>
+                </tr>
+            </thead>
+            <tbody id="nmTableBody"></tbody>
+        </table>
+        <div class="meta-pagination" id="nmShowMoreRow">
+            <button id="nmShowMoreBtn" onclick="nmShowMore()">Show more &darr;</button>
+        </div>
+        <div class="meta-pagination" id="nmPaginationRow" style="display:none;">
+            <button id="nmPrevPageBtn" onclick="nmChangePage(-1)">&larr; Prev</button>
+            <span id="nmPageLabel"></span>
+            <button id="nmNextPageBtn" onclick="nmChangePage(1)">Next &rarr;</button>
+        </div>
+    </div>
+
+</div>
+
+<h3>
+<p style="margin-top:20px;">Goodness-of-exemplar ratings index how typical each sound is of its label (e.g., how "birdsong-like" a given birdsong recording sounds), while similarity ratings capture how alike pairs of sounds within the same category are judged to be. Both measures were collected from listeners at the trial level and are also provided as averaged ratings below.</p>
+
+<p>Downloads:
+<ul>
+	<li>Trial-level goodness ratings, one row per participant per sound (~10,600 rows): rater ID, sound category, exemplar number, goodness rating (1&ndash;10), and response time. <a href="https://raw.githubusercontent.com/mkachlicka/envisounds_dataset/main/data/goodness_data.csv" download><button type="submit"><i class="fa fa-download"></i> Download Goodness Data (raw)</button></a></li><br>
+
+	<li>Mean goodness rating per sound, averaged across all participants (530 rows): sound category, exemplar number, and mean rating. <a href="https://raw.githubusercontent.com/mkachlicka/envisounds_dataset/main/data/goodness_data_averaged.csv" download><button type="submit"><i class="fa fa-download"></i> Download Goodness Data (averaged)</button></a></li><br>
+
+	<li>Trial-level similarity ratings, one row per participant per sound pair (~53,000 rows): rater ID, sound category, both exemplar numbers, similarity rating (1&ndash;8), and response time. <a href="https://raw.githubusercontent.com/mkachlicka/envisounds_dataset/main/data/similarity_data.csv" download><button type="submit"><i class="fa fa-download"></i> Download Similarity Data (raw)</button></a></li><br>
+
+	<li>Mean similarity rating per sound pair, averaged across all participants (5,300 rows): sound category, both exemplar numbers, and mean rating. <a href="https://raw.githubusercontent.com/mkachlicka/envisounds_dataset/main/data/similarity_data_averaged.csv" download><button type="submit"><i class="fa fa-download"></i> Download Similarity Data (averaged)</button></a></li>
+</ul>
+</p>
+</h3>
+
+<span id="dots-norms"></span><span id="more-norms">
+<div id="gsLoading">Loading goodness &amp; similarity data from GitHub&hellip;</div>
+<div id="gsErrorBox" style="display:none;"></div>
+
+<div id="gsContent" style="display:none;">
+
+    <h3 style="margin-top:30px;">Goodness ratings</h3>
+
+    <div class="meta-controls">
+        <div class="meta-control-row">
+            <label for="gsGoodnessSearchInput"><i class="fa fa-search"></i> Search:</label>
+            <input type="text" id="gsGoodnessSearchInput" placeholder="Filter by sound&hellip;">
+            <label for="gsGoodnessCategoryFilter">Category:</label>
+            <select id="gsGoodnessCategoryFilter">
+                <option value="">All categories</option>
+            </select>
+            <label for="gsGoodnessSubcategoryFilter">Subcategory:</label>
+            <select id="gsGoodnessSubcategoryFilter">
+                <option value="">All subcategories</option>
+            </select>
+            <button onclick="gsResetFilters('goodness')">Reset</button>
+        </div>
+        <p class="meta-count-line" id="gsGoodnessCountLine"></p>
+    </div>
+
+    <div class="meta-table-wrap">
+        <table class="meta-table">
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>Sound</th>
+                    <th>Category</th>
+                    <th>Subcategory</th>
+                    <th>Goodness rating</th>
+                </tr>
+            </thead>
+            <tbody id="gsGoodnessTableBody"></tbody>
+        </table>
+        <div class="meta-pagination" id="gsGoodnessShowMoreRow">
+            <button id="gsGoodnessShowMoreBtn" onclick="gsShowMore('goodness')">Show more &darr;</button>
+        </div>
+        <div class="meta-pagination" id="gsGoodnessPaginationRow" style="display:none;">
+            <button id="gsGoodnessPrevPageBtn" onclick="gsChangePage('goodness', -1)">&larr; Prev</button>
+            <span id="gsGoodnessPageLabel"></span>
+            <button id="gsGoodnessNextPageBtn" onclick="gsChangePage('goodness', 1)">Next &rarr;</button>
+        </div>
+    </div>
+
+    <h3 style="margin-top:30px;">Similarity ratings</h3>
+
+    <div class="meta-controls">
+        <div class="meta-control-row">
+            <label for="gsSimilaritySearchInput"><i class="fa fa-search"></i> Search:</label>
+            <input type="text" id="gsSimilaritySearchInput" placeholder="Filter by sound&hellip;">
+            <label for="gsSimilarityCategoryFilter">Category:</label>
+            <select id="gsSimilarityCategoryFilter">
+                <option value="">All categories</option>
+            </select>
+            <label for="gsSimilaritySubcategoryFilter">Subcategory:</label>
+            <select id="gsSimilaritySubcategoryFilter">
+                <option value="">All subcategories</option>
+            </select>
+            <button onclick="gsResetFilters('similarity')">Reset</button>
+        </div>
+        <p class="meta-count-line" id="gsSimilarityCountLine"></p>
+    </div>
+
+    <div class="meta-table-wrap">
+        <table class="meta-table">
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>Category</th>
+                    <th>Subcategory</th>
+                    <th>Sound 1</th>
+                    <th>Sound 2</th>
+                    <th>Similarity rating</th>
+                </tr>
+            </thead>
+            <tbody id="gsSimilarityTableBody"></tbody>
+        </table>
+        <div class="meta-pagination" id="gsSimilarityShowMoreRow">
+            <button id="gsSimilarityShowMoreBtn" onclick="gsShowMore('similarity')">Show more &darr;</button>
+        </div>
+        <div class="meta-pagination" id="gsSimilarityPaginationRow" style="display:none;">
+            <button id="gsSimilarityPrevPageBtn" onclick="gsChangePage('similarity', -1)">&larr; Prev</button>
+            <span id="gsSimilarityPageLabel"></span>
+            <button id="gsSimilarityNextPageBtn" onclick="gsChangePage('similarity', 1)">Next &rarr;</button>
+        </div>
+    </div>
+
+</div>
+
+</span>
+
+<button onclick="toggleSection('norms')" id="myBtn-norms">Read more</button>
+
+<script>
+    (function () {
+        const GS_USER   = 'mkachlicka';
+        const GS_REPO   = 'envisounds_dataset';
+        const GS_BRANCH = 'main';
+        const GS_META_CSV_URL       = `https://raw.githubusercontent.com/${GS_USER}/${GS_REPO}/${GS_BRANCH}/audio_files/envisounds_metadata.csv`;
+        const GS_GOODNESS_CSV_URL   = `https://raw.githubusercontent.com/${GS_USER}/${GS_REPO}/${GS_BRANCH}/data/goodness_data_averaged.csv`;
+        const GS_SIMILARITY_CSV_URL = `https://raw.githubusercontent.com/${GS_USER}/${GS_REPO}/${GS_BRANCH}/data/similarity_data_averaged.csv`;
+
+        const GS_INITIAL_SIZE  = 20;
+        const GS_EXPANDED_SIZE = 40; // shown after one "Show more" click; also the page size once paginated
+
+        // mode: 'compact' (first GS_INITIAL_SIZE rows, "Show more" button) or
+        // 'paginated' (GS_EXPANDED_SIZE rows per page, Prev/Next controls).
+        let gsGoodnessAll = [], gsGoodnessFiltered = [];
+        let gsGoodnessMode = 'compact', gsGoodnessPage = 1;
+
+        let gsSimilarityAll = [], gsSimilarityFiltered = [];
+        let gsSimilarityMode = 'compact', gsSimilarityPage = 1;
+
+        function gsStripQuotes(str) {
+            return String(str || '').replace(/^'+|'+$/g, '').trim();
+        }
+
+        // The goodness/similarity CSVs use slightly different spellings for
+        // two sound labels than the main metadata file. This maps the
+        // ratings-file spelling to the metadata spelling so the join below
+        // resolves correctly.
+        const GS_LABEL_ALIASES = {
+            'InsectsBuzzing': 'InsectBuzzing',
+            'TrainBrakes': 'TrainBreaks',
+        };
+        function gsMetaLabel(category) {
+            return GS_LABEL_ALIASES[category] || category;
+        }
+
+        // Builds a lookup from "<Category>_<NN>_MONO" (matching the goodness/
+        // similarity CSVs' category+sound1 fields) to the sound's top-level
+        // Category (Nature/Human/Manmade) and Subcategory, as given in the
+        // main metadata file.
+        function gsBuildMetaLookup(metaText) {
+            const rows = d3.csvParse(metaText);
+            const lookup = new Map();
+            rows.forEach(r => {
+                if (!r.FileName) return;
+                const fileKey = gsStripQuotes(r.FileName).replace(/\.wav$/i, '');
+                lookup.set(fileKey, { category: r.Category, subcategory: r.Subcategory });
+            });
+            return lookup;
+        }
+
+        async function gsLoadAll() {
+            try {
+                const [metaText, goodnessText, similarityText] = await Promise.all([
+                    fetch(GS_META_CSV_URL).then(r => { if (!r.ok) throw new Error(`Metadata request failed (${r.status}).`); return r.text(); }),
+                    fetch(GS_GOODNESS_CSV_URL).then(r => { if (!r.ok) throw new Error(`Goodness data request failed (${r.status}).`); return r.text(); }),
+                    fetch(GS_SIMILARITY_CSV_URL).then(r => { if (!r.ok) throw new Error(`Similarity data request failed (${r.status}).`); return r.text(); }),
+                ]);
+
+                const metaLookup = gsBuildMetaLookup(metaText);
+
+                gsGoodnessAll = d3.csvParse(goodnessText)
+                    .filter(r => r.category && r.sound1)
+                    .map(r => {
+                        const info = metaLookup.get(`${gsMetaLabel(r.category)}_${r.sound1}_MONO`) || {};
+                        return {
+                            sound: `${r.category}_${r.sound1}`,
+                            category: info.category || '—',
+                            subcategory: info.subcategory || '—',
+                            response: parseFloat(r.response),
+                        };
+                    });
+
+                gsSimilarityAll = d3.csvParse(similarityText)
+                    .filter(r => r.category && r.sound1 && r.sound2)
+                    .map(r => {
+                        const info = metaLookup.get(`${gsMetaLabel(r.category)}_${r.sound1}_MONO`) || {};
+                        return {
+                            category: info.category || '—',
+                            subcategory: info.subcategory || '—',
+                            sound1: `${r.category}_${r.sound1}`,
+                            sound2: `${r.category}_${r.sound2}`,
+                            response: parseFloat(r.response),
+                        };
+                    });
+
+                if (!gsGoodnessAll.length) throw new Error('No goodness entries found.');
+                if (!gsSimilarityAll.length) throw new Error('No similarity entries found.');
+
+                gsPopulateFilters('goodness', gsGoodnessAll);
+                gsPopulateFilters('similarity', gsSimilarityAll);
+                gsGoodnessFiltered = gsGoodnessAll;
+                gsSimilarityFiltered = gsSimilarityAll;
+
+                document.getElementById('gsLoading').style.display = 'none';
+                document.getElementById('gsContent').style.display = 'block';
+                gsRenderPage('goodness');
+                gsRenderPage('similarity');
+
+            } catch (err) {
+                document.getElementById('gsLoading').style.display = 'none';
+                const box = document.getElementById('gsErrorBox');
+                box.style.display = 'block';
+                box.innerHTML = `<div class="meta-error-box"><strong>Couldn\u2019t load the goodness/similarity data.</strong><br>${err.message}</div>`;
+                console.error(err);
+            }
+        }
+
+        function gsPopulateFilters(kind, data) {
+            const categories = [...new Set(data.map(d => d.category))].filter(Boolean).sort();
+            const catSelect = document.getElementById(`gs${gsCap(kind)}CategoryFilter`);
+            catSelect.innerHTML = '<option value="">All categories</option>';
+            categories.forEach(cat => {
+                const opt = document.createElement('option');
+                opt.value = opt.textContent = cat;
+                catSelect.appendChild(opt);
+            });
+            gsRefreshSubcategoryOptions(kind, data);
+        }
+
+        function gsRefreshSubcategoryOptions(kind, data, selectedCategory) {
+            const subSelect = document.getElementById(`gs${gsCap(kind)}SubcategoryFilter`);
+            const pool = selectedCategory ? data.filter(d => d.category === selectedCategory) : data;
+            const subs = [...new Set(pool.map(d => d.subcategory))].filter(Boolean).sort();
+
+            const prevValue = subSelect.value;
+            subSelect.innerHTML = '<option value="">All subcategories</option>';
+            subs.forEach(sub => {
+                const opt = document.createElement('option');
+                opt.value = opt.textContent = sub;
+                subSelect.appendChild(opt);
+            });
+            if (subs.includes(prevValue)) subSelect.value = prevValue;
+        }
+
+        function gsCap(kind) { return kind.charAt(0).toUpperCase() + kind.slice(1); }
+
+        function gsApplyFilters(kind) {
+            const all  = kind === 'goodness' ? gsGoodnessAll : gsSimilarityAll;
+            const q    = document.getElementById(`gs${gsCap(kind)}SearchInput`).value.trim().toLowerCase();
+            const cat  = document.getElementById(`gs${gsCap(kind)}CategoryFilter`).value;
+            const sub  = document.getElementById(`gs${gsCap(kind)}SubcategoryFilter`).value;
+
+            const filtered = all.filter(d => {
+                if (cat && d.category !== cat) return false;
+                if (sub && d.subcategory !== sub) return false;
+                if (!q) return true;
+                if (kind === 'goodness') return d.sound.toLowerCase().includes(q);
+                return d.sound1.toLowerCase().includes(q) || d.sound2.toLowerCase().includes(q);
+            });
+
+            if (kind === 'goodness') { gsGoodnessFiltered = filtered; gsGoodnessMode = 'compact'; gsGoodnessPage = 1; }
+            else { gsSimilarityFiltered = filtered; gsSimilarityMode = 'compact'; gsSimilarityPage = 1; }
+
+            gsRenderPage(kind);
+        }
+
+        function gsResetFilters(kind) {
+            document.getElementById(`gs${gsCap(kind)}SearchInput`).value = '';
+            document.getElementById(`gs${gsCap(kind)}CategoryFilter`).value = '';
+            const all = kind === 'goodness' ? gsGoodnessAll : gsSimilarityAll;
+            gsRefreshSubcategoryOptions(kind, all);
+            document.getElementById(`gs${gsCap(kind)}SubcategoryFilter`).value = '';
+            if (kind === 'goodness') { gsGoodnessFiltered = gsGoodnessAll; gsGoodnessMode = 'compact'; gsGoodnessPage = 1; }
+            else { gsSimilarityFiltered = gsSimilarityAll; gsSimilarityMode = 'compact'; gsSimilarityPage = 1; }
+            gsRenderPage(kind);
+        }
+        window.gsResetFilters = gsResetFilters;
+
+        function gsDebounce(fn, wait) {
+            let t;
+            return (...args) => { clearTimeout(t); t = setTimeout(() => fn(...args), wait); };
+        }
+
+        document.getElementById('gsGoodnessSearchInput').addEventListener('input', gsDebounce(() => gsApplyFilters('goodness'), 200));
+        document.getElementById('gsGoodnessCategoryFilter').addEventListener('change', () => {
+            gsRefreshSubcategoryOptions('goodness', gsGoodnessAll, document.getElementById('gsGoodnessCategoryFilter').value);
+            gsApplyFilters('goodness');
+        });
+        document.getElementById('gsGoodnessSubcategoryFilter').addEventListener('change', () => gsApplyFilters('goodness'));
+
+        document.getElementById('gsSimilaritySearchInput').addEventListener('input', gsDebounce(() => gsApplyFilters('similarity'), 200));
+        document.getElementById('gsSimilarityCategoryFilter').addEventListener('change', () => {
+            gsRefreshSubcategoryOptions('similarity', gsSimilarityAll, document.getElementById('gsSimilarityCategoryFilter').value);
+            gsApplyFilters('similarity');
+        });
+        document.getElementById('gsSimilaritySubcategoryFilter').addEventListener('change', () => gsApplyFilters('similarity'));
+
+        // "Show more" only ever fires once per filter state: it doubles the
+        // initial view to GS_EXPANDED_SIZE rows and switches the table into
+        // paginated mode (Prev/Next, GS_EXPANDED_SIZE rows per page).
+        function gsShowMore(kind) {
+            if (kind === 'goodness') { gsGoodnessMode = 'paginated'; gsGoodnessPage = 1; }
+            else { gsSimilarityMode = 'paginated'; gsSimilarityPage = 1; }
+            gsRenderPage(kind);
+        }
+        window.gsShowMore = gsShowMore;
+
+        function gsChangePage(kind, delta) {
+            const filtered = kind === 'goodness' ? gsGoodnessFiltered : gsSimilarityFiltered;
+            const maxPage = Math.max(1, Math.ceil(filtered.length / GS_EXPANDED_SIZE));
+            if (kind === 'goodness') gsGoodnessPage = Math.min(maxPage, Math.max(1, gsGoodnessPage + delta));
+            else gsSimilarityPage = Math.min(maxPage, Math.max(1, gsSimilarityPage + delta));
+            gsRenderPage(kind);
+        }
+        window.gsChangePage = gsChangePage;
+
+        function gsRenderPage(kind) {
+            const all      = kind === 'goodness' ? gsGoodnessAll : gsSimilarityAll;
+            const filtered = kind === 'goodness' ? gsGoodnessFiltered : gsSimilarityFiltered;
+            const total    = all.length;
+            const shown    = filtered.length;
+            const mode     = kind === 'goodness' ? gsGoodnessMode : gsSimilarityMode;
+
+            let start, pageItems, maxPage, page;
+
+            if (mode === 'compact') {
+                start = 0;
+                pageItems = filtered.slice(0, GS_INITIAL_SIZE);
+            } else {
+                maxPage = Math.max(1, Math.ceil(shown / GS_EXPANDED_SIZE));
+                page = Math.min(kind === 'goodness' ? gsGoodnessPage : gsSimilarityPage, maxPage);
+                if (kind === 'goodness') gsGoodnessPage = page; else gsSimilarityPage = page;
+                start = (page - 1) * GS_EXPANDED_SIZE;
+                pageItems = filtered.slice(start, start + GS_EXPANDED_SIZE);
+            }
+
+            document.getElementById(`gs${gsCap(kind)}CountLine`).textContent = shown === total
+                ? (mode === 'compact'
+                    ? `Showing ${pageItems.length} of ${total} ${kind === 'goodness' ? 'sounds' : 'sound pairs'}.`
+                    : `Showing ${start + 1}\u2013${start + pageItems.length} of ${total} ${kind === 'goodness' ? 'sounds' : 'sound pairs'}.`)
+                : (mode === 'compact'
+                    ? `Showing ${pageItems.length} of ${shown} matching ${kind === 'goodness' ? 'sounds' : 'sound pairs'} (${total} total).`
+                    : `Showing ${start + 1}\u2013${start + pageItems.length} of ${shown} matching ${kind === 'goodness' ? 'sounds' : 'sound pairs'} (${total} total).`);
+
+            const tbody = document.getElementById(`gs${gsCap(kind)}TableBody`);
+            tbody.innerHTML = '';
+            pageItems.forEach((d, i) => tbody.appendChild(gsBuildRow(kind, d, start + i + 1)));
+
+            const showMoreRow    = document.getElementById(`gs${gsCap(kind)}ShowMoreRow`);
+            const paginationRow  = document.getElementById(`gs${gsCap(kind)}PaginationRow`);
+
+            if (mode === 'compact') {
+                paginationRow.style.display = 'none';
+                showMoreRow.style.display = shown > GS_INITIAL_SIZE ? 'flex' : 'none';
+            } else {
+                showMoreRow.style.display = 'none';
+                paginationRow.style.display = 'flex';
+                document.getElementById(`gs${gsCap(kind)}PageLabel`).textContent = `Page ${page} of ${maxPage}`;
+                document.getElementById(`gs${gsCap(kind)}PrevPageBtn`).disabled = page <= 1;
+                document.getElementById(`gs${gsCap(kind)}NextPageBtn`).disabled = page >= maxPage;
+            }
+        }
+
+        function gsBuildRow(kind, d, rowNum) {
+            const tr = document.createElement('tr');
+            if (kind === 'goodness') {
+                tr.innerHTML = `
+                    <td>${rowNum}</td>
+                    <td>${gsEscapeHtml(d.sound)}</td>
+                    <td><span class="top-cat-tag top-cat-${gsEscapeHtml(d.category)}">${gsEscapeHtml(d.category)}</span></td>
+                    <td><span class="sub-cat-tag">${gsEscapeHtml(d.subcategory)}</span></td>
+                    <td>${isFinite(d.response) ? d.response.toFixed(2) : '—'}</td>
+                `;
+            } else {
+                tr.innerHTML = `
+                    <td>${rowNum}</td>
+                    <td><span class="top-cat-tag top-cat-${gsEscapeHtml(d.category)}">${gsEscapeHtml(d.category)}</span></td>
+                    <td><span class="sub-cat-tag">${gsEscapeHtml(d.subcategory)}</span></td>
+                    <td>${gsEscapeHtml(d.sound1)}</td>
+                    <td>${gsEscapeHtml(d.sound2)}</td>
+                    <td>${isFinite(d.response) ? d.response.toFixed(2) : '—'}</td>
+                `;
+            }
+            return tr;
+        }
+
+        function gsEscapeHtml(str) {
+            return String(str).replace(/[&<>"']/g, c => ({
+                '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;',
+            }[c]));
+        }
+
+        gsLoadAll();
+    })();
+</script>
+<script>
+    (function () {
+        const NM_USER   = 'mkachlicka';
+        const NM_REPO   = 'envisounds_dataset';
+        const NM_BRANCH = 'main';
+        const NM_CSV_URL = `https://raw.githubusercontent.com/${NM_USER}/${NM_REPO}/${NM_BRANCH}/data/data_norms_anonymized.csv`;
+
+        const NM_INITIAL_SIZE  = 20;
+        const NM_EXPANDED_SIZE = 40; // shown after one "Show more" click; also the page size once paginated
+
+        // Maps the CSV's main_category values onto the site's existing
+        // top-cat-tag colour classes (top-cat-Nature / -Human / -Manmade).
+        const NM_MAIN_CATEGORY_LABELS = {
+            natural: 'Nature',
+            human: 'Human',
+            mechanical: 'Manmade',
+        };
+
+        let nmAll = [], nmFiltered = [];
+        let nmMode = 'compact', nmPage = 1; // 'compact' (first NM_INITIAL_SIZE rows) or 'paginated'
+
+        function nmCap(str) {
+            return str ? str.charAt(0).toUpperCase() + str.slice(1) : str;
+        }
+
+        async function nmLoadAll() {
+            try {
+                const res = await fetch(NM_CSV_URL);
+                if (!res.ok) throw new Error(`Norms data request failed (${res.status}).`);
+                const text = await res.text();
+
+                nmAll = d3.csvParse(text)
+                    .filter(r => r.sound)
+                    .map(r => ({
+                        id: r.ID,
+                        sound: String(r.sound).replace(/\.wav$/i, '').replace(/_MONO$/i, ''),
+                        mainCategory: NM_MAIN_CATEGORY_LABELS[r.main_category] || r.main_category || '—',
+                        category: nmCap(r.category),
+                        recognition: parseFloat(r.recognition),
+                        imageability: parseFloat(r.imageability),
+                        representativeness: parseFloat(r.representativeness),
+                        scoring: r.SCORING,
+                        durationS: parseFloat(r.duration_s),
+                        samples: r.samples,
+                        durationMs: parseFloat(r.duration_ms),
+                        durationRecognition: parseFloat(r.duration_recognition),
+                    }));
+
+                if (!nmAll.length) throw new Error('No norms entries found.');
+
+                nmPopulateFilters();
+                nmFiltered = nmAll;
+
+                document.getElementById('nmLoading').style.display = 'none';
+                document.getElementById('nmContent').style.display = 'block';
+                nmRenderPage();
+
+            } catch (err) {
+                document.getElementById('nmLoading').style.display = 'none';
+                const box = document.getElementById('nmErrorBox');
+                box.style.display = 'block';
+                box.innerHTML = `<div class="meta-error-box"><strong>Couldn\u2019t load the norms data.</strong><br>${err.message}</div>`;
+                console.error(err);
+            }
+        }
+
+        function nmPopulateFilters() {
+            const mainCats = [...new Set(nmAll.map(d => d.mainCategory))].filter(Boolean).sort();
+            const mainSelect = document.getElementById('nmMainCategoryFilter');
+            mainSelect.innerHTML = '<option value="">All main categories</option>';
+            mainCats.forEach(cat => {
+                const opt = document.createElement('option');
+                opt.value = opt.textContent = cat;
+                mainSelect.appendChild(opt);
+            });
+            nmRefreshCategoryOptions();
+        }
+
+        function nmRefreshCategoryOptions(selectedMainCategory) {
+            const catSelect = document.getElementById('nmCategoryFilter');
+            const pool = selectedMainCategory ? nmAll.filter(d => d.mainCategory === selectedMainCategory) : nmAll;
+            const cats = [...new Set(pool.map(d => d.category))].filter(Boolean).sort();
+
+            const prevValue = catSelect.value;
+            catSelect.innerHTML = '<option value="">All categories</option>';
+            cats.forEach(cat => {
+                const opt = document.createElement('option');
+                opt.value = opt.textContent = cat;
+                catSelect.appendChild(opt);
+            });
+            if (cats.includes(prevValue)) catSelect.value = prevValue;
+        }
+
+        function nmApplyFilters() {
+            const q       = document.getElementById('nmSearchInput').value.trim().toLowerCase();
+            const mainCat = document.getElementById('nmMainCategoryFilter').value;
+            const cat     = document.getElementById('nmCategoryFilter').value;
+
+            nmFiltered = nmAll.filter(d => {
+                if (mainCat && d.mainCategory !== mainCat) return false;
+                if (cat && d.category !== cat) return false;
+                if (!q) return true;
+                return d.sound.toLowerCase().includes(q) || String(d.id).toLowerCase().includes(q);
+            });
+
+            nmMode = 'compact';
+            nmPage = 1;
+            nmRenderPage();
+        }
+
+        function nmResetFilters() {
+            document.getElementById('nmSearchInput').value = '';
+            document.getElementById('nmMainCategoryFilter').value = '';
+            nmRefreshCategoryOptions();
+            document.getElementById('nmCategoryFilter').value = '';
+            nmFiltered = nmAll;
+            nmMode = 'compact';
+            nmPage = 1;
+            nmRenderPage();
+        }
+        window.nmResetFilters = nmResetFilters;
+
+        function nmDebounce(fn, wait) {
+            let t;
+            return (...args) => { clearTimeout(t); t = setTimeout(() => fn(...args), wait); };
+        }
+
+        document.getElementById('nmSearchInput').addEventListener('input', nmDebounce(nmApplyFilters, 200));
+        document.getElementById('nmMainCategoryFilter').addEventListener('change', () => {
+            nmRefreshCategoryOptions(document.getElementById('nmMainCategoryFilter').value);
+            nmApplyFilters();
+        });
+        document.getElementById('nmCategoryFilter').addEventListener('change', nmApplyFilters);
+
+        // "Show more" only ever fires once per filter state: it doubles the
+        // initial view to NM_EXPANDED_SIZE rows and switches the table into
+        // paginated mode (Prev/Next, NM_EXPANDED_SIZE rows per page).
+        function nmShowMore() {
+            nmMode = 'paginated';
+            nmPage = 1;
+            nmRenderPage();
+        }
+        window.nmShowMore = nmShowMore;
+
+        function nmChangePage(delta) {
+            const maxPage = Math.max(1, Math.ceil(nmFiltered.length / NM_EXPANDED_SIZE));
+            nmPage = Math.min(maxPage, Math.max(1, nmPage + delta));
+            nmRenderPage();
+        }
+        window.nmChangePage = nmChangePage;
+
+        function nmRenderPage() {
+            const total = nmAll.length;
+            const shown = nmFiltered.length;
+
+            let start, pageItems, maxPage, page;
+
+            if (nmMode === 'compact') {
+                start = 0;
+                pageItems = nmFiltered.slice(0, NM_INITIAL_SIZE);
+            } else {
+                maxPage = Math.max(1, Math.ceil(shown / NM_EXPANDED_SIZE));
+                page = Math.min(nmPage, maxPage);
+                nmPage = page;
+                start = (page - 1) * NM_EXPANDED_SIZE;
+                pageItems = nmFiltered.slice(start, start + NM_EXPANDED_SIZE);
+            }
+
+            document.getElementById('nmCountLine').textContent = shown === total
+                ? (nmMode === 'compact'
+                    ? `Showing ${pageItems.length} of ${total} trials.`
+                    : `Showing ${start + 1}\u2013${start + pageItems.length} of ${total} trials.`)
+                : (nmMode === 'compact'
+                    ? `Showing ${pageItems.length} of ${shown} matching trials (${total} total).`
+                    : `Showing ${start + 1}\u2013${start + pageItems.length} of ${shown} matching trials (${total} total).`);
+
+            const tbody = document.getElementById('nmTableBody');
+            tbody.innerHTML = '';
+            pageItems.forEach((d, i) => tbody.appendChild(nmBuildRow(d, start + i + 1)));
+
+            const showMoreRow   = document.getElementById('nmShowMoreRow');
+            const paginationRow = document.getElementById('nmPaginationRow');
+
+            if (nmMode === 'compact') {
+                paginationRow.style.display = 'none';
+                showMoreRow.style.display = shown > NM_INITIAL_SIZE ? 'flex' : 'none';
+            } else {
+                showMoreRow.style.display = 'none';
+                paginationRow.style.display = 'flex';
+                document.getElementById('nmPageLabel').textContent = `Page ${page} of ${maxPage}`;
+                document.getElementById('nmPrevPageBtn').disabled = page <= 1;
+                document.getElementById('nmNextPageBtn').disabled = page >= maxPage;
+            }
+        }
+
+        function nmBuildRow(d, rowNum) {
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td>${rowNum}</td>
+                <td>${nmEscapeHtml(d.id)}</td>
+                <td>${nmEscapeHtml(d.sound)}</td>
+                <td><span class="top-cat-tag top-cat-${nmEscapeHtml(d.mainCategory)}">${nmEscapeHtml(d.mainCategory)}</span></td>
+                <td><span class="sub-cat-tag">${nmEscapeHtml(d.category)}</span></td>
+                <td>${isFinite(d.recognition) ? d.recognition.toFixed(2) : '—'}</td>
+                <td>${isFinite(d.imageability) ? d.imageability : '—'}</td>
+                <td>${isFinite(d.representativeness) ? d.representativeness : '—'}</td>
+                <td>${nmEscapeHtml(d.scoring)}</td>
+                <td>${isFinite(d.durationS) ? d.durationS.toFixed(3) : '—'}</td>
+                <td>${nmEscapeHtml(d.samples)}</td>
+                <td>${isFinite(d.durationMs) ? d.durationMs.toFixed(1) : '—'}</td>
+                <td>${isFinite(d.durationRecognition) ? d.durationRecognition.toFixed(2) : '—'}</td>
+            `;
+            return tr;
+        }
+
+        function nmEscapeHtml(str) {
+            return String(str ?? '').replace(/[&<>"']/g, c => ({
+                '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;',
+            }[c]));
+        }
+
+        nmLoadAll();
+    })();
+</script>
 </div>
 
 
